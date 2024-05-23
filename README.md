@@ -1,6 +1,6 @@
 
 
-# BioSampleManager
+# ![Logo](resources/logo_transparent.png)BioSampleManager
 Fetch metadata information from the following databases:
 - [GEO](https://www.ncbi.nlm.nih.gov/geo/): Gene Expression Omnibus, 
 - [SRA](https://www.ncbi.nlm.nih.gov/sra): Sequence Read Archive, 
