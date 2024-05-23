@@ -1,0 +1,597 @@
+{
+    "GSE115469": {
+        "accession": "GSE115469",
+        "supplementary_files": [
+            {
+                "filename": "GSE115469_Data.csv.gz",
+                "url": "ftp.ncbi.nlm.nih.gov/geo/series/GSE115nnn/GSE115469/suppl/GSE115469_Data.csv.gz",
+                "size": "108065293"
+            },
+            {
+                "filename": "GSE115469_CellClusterType.txt.gz",
+                "url": "ftp.ncbi.nlm.nih.gov/geo/series/GSE115nnn/GSE115469/suppl/GSE115469_CellClusterType.txt.gz",
+                "size": "78393"
+            }
+        ],
+        "geo_samples": {
+            "GSM3178782": {
+                "accession": "GSM3178782",
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS3391629": {
+                        "accession": "SRS3391629",
+                        "title": "Patient 1 Total Liver Homogenate",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Liver",
+                            "tissue": "Total Liver Homogenate",
+                            "ENA-SPOT-COUNT": 166595045,
+                            "ENA-BASE-COUNT": 16326314410,
+                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                            "ENA-LAST-UPDATE": "2018-10-23"
+                        },
+                        "experiments": {
+                            "SRX4180079": {
+                                "accession": "SRX4180079",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178782: Patient 1 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR7276474": {
+                                        "accession": "SRR7276474",
+                                        "experiment": "SRX4180079",
+                                        "study": "SRP149989",
+                                        "sample": "SRS3391629",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178782: Patient 1 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "assembly": "hg38",
+                                            "ENA-SPOT-COUNT": 166595045,
+                                            "ENA-BASE-COUNT": 16326314410,
+                                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                                            "ENA-LAST-UPDATE": "2018-10-23"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/SRA716/SRA716608/bam/P1TLH.bam",
+                                                    "md5": "d0fde6bf21d9f97bdf349a3d6f0a8787",
+                                                    "size": 48545467653
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR7276474/P1TLH.bam.1"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-1/SRR7276474/P1TLH.bam.1"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR7276474/SRR7276474.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "GSM3178783": {
+                "accession": "GSM3178783",
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS3391631": {
+                        "accession": "SRS3391631",
+                        "title": "Patient 2 Total Liver Homogenate",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Liver",
+                            "tissue": "Total Liver Homogenate",
+                            "ENA-SPOT-COUNT": 392750718,
+                            "ENA-BASE-COUNT": 38489570364,
+                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                            "ENA-LAST-UPDATE": "2018-10-23"
+                        },
+                        "experiments": {
+                            "SRX4180080": {
+                                "accession": "SRX4180080",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178783: Patient 2 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR7276475": {
+                                        "accession": "SRR7276475",
+                                        "experiment": "SRX4180080",
+                                        "study": "SRP149989",
+                                        "sample": "SRS3391631",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178783: Patient 2 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "assembly": "hg38",
+                                            "ENA-SPOT-COUNT": 392750718,
+                                            "ENA-BASE-COUNT": 38489570364,
+                                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                                            "ENA-LAST-UPDATE": "2018-10-23"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/SRA716/SRA716608/bam/P2TLH.bam",
+                                                    "md5": "b13f5e760b6d9d6b4d51b40705202983",
+                                                    "size": 69477495465
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR7276475/P2TLH.bam.1"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-1/SRR7276475/P2TLH.bam.1"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR7276475/SRR7276475.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "GSM3178784": {
+                "accession": "GSM3178784",
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS3391630": {
+                        "accession": "SRS3391630",
+                        "title": "Patient 3 Total Liver Homogenate",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Liver",
+                            "tissue": "Total Liver Homogenate",
+                            "ENA-SPOT-COUNT": 165902306,
+                            "ENA-BASE-COUNT": 16258425988,
+                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                            "ENA-LAST-UPDATE": "2018-10-23"
+                        },
+                        "experiments": {
+                            "SRX4180081": {
+                                "accession": "SRX4180081",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178784: Patient 3 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR7276476": {
+                                        "accession": "SRR7276476",
+                                        "experiment": "SRX4180081",
+                                        "study": "SRP149989",
+                                        "sample": "SRS3391630",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178784: Patient 3 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "assembly": "hg38",
+                                            "ENA-SPOT-COUNT": 165902306,
+                                            "ENA-BASE-COUNT": 16258425988,
+                                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                                            "ENA-LAST-UPDATE": "2018-10-23"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/SRA716/SRA716608/bam/P3TLH.bam",
+                                                    "md5": "d1ef981eee539acf769524dca92fc962",
+                                                    "size": 40823222969
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR7276476/P3TLH.bam.1"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-1/SRR7276476/P3TLH.bam.1"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR7276476/SRR7276476.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "GSM3178785": {
+                "accession": "GSM3178785",
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS3391632": {
+                        "accession": "SRS3391632",
+                        "title": "Patient 4 Total Liver Homogenate",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Liver",
+                            "tissue": "Total Liver Homogenate",
+                            "ENA-SPOT-COUNT": 171900077,
+                            "ENA-BASE-COUNT": 16846207546,
+                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                            "ENA-LAST-UPDATE": "2018-10-23"
+                        },
+                        "experiments": {
+                            "SRX4180082": {
+                                "accession": "SRX4180082",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178785: Patient 4 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR7276477": {
+                                        "accession": "SRR7276477",
+                                        "experiment": "SRX4180082",
+                                        "study": "SRP149989",
+                                        "sample": "SRS3391632",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178785: Patient 4 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "assembly": "hg38",
+                                            "ENA-SPOT-COUNT": 171900077,
+                                            "ENA-BASE-COUNT": 16846207546,
+                                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                                            "ENA-LAST-UPDATE": "2018-10-23"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/SRA716/SRA716608/bam/P4TLH.bam",
+                                                    "md5": "3ed9267611b815b2916e487e4f329a16",
+                                                    "size": 50474306271
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR7276477/P4TLH.bam.1"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-1/SRR7276477/P4TLH.bam.1"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR7276477/SRR7276477.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "GSM3178786": {
+                "accession": "GSM3178786",
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS3391633": {
+                        "accession": "SRS3391633",
+                        "title": "Patient 5 Total Liver Homogenate",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Liver",
+                            "tissue": "Total Liver Homogenate",
+                            "ENA-SPOT-COUNT": 153310090,
+                            "ENA-BASE-COUNT": 15024388820,
+                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                            "ENA-LAST-UPDATE": "2018-10-23"
+                        },
+                        "experiments": {
+                            "SRX4180083": {
+                                "accession": "SRX4180083",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178786: Patient 5 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR7276478": {
+                                        "accession": "SRR7276478",
+                                        "experiment": "SRX4180083",
+                                        "study": "SRP149989",
+                                        "sample": "SRS3391633",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3178786: Patient 5 Total Liver Homogenate; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "assembly": "hg38",
+                                            "ENA-SPOT-COUNT": 153310090,
+                                            "ENA-BASE-COUNT": 15024388820,
+                                            "ENA-FIRST-PUBLIC": "2018-10-23",
+                                            "ENA-LAST-UPDATE": "2018-10-23"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/SRA716/SRA716608/bam/P5TLH.bam",
+                                                    "md5": "50b4d1f193192acb6676524bb27b5381",
+                                                    "size": 40628679317
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR7276478/P5TLH.bam.1"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-1/SRR7276478/P5TLH.bam.1"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos3/sra-pub-run-21/SRR7276478/SRR7276478.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "GSE130073": {
+        "accession": "GSE130073",
+        "supplementary_files": [
+            {
+                "filename": "filelist.txt",
+                "url": "ftp.ncbi.nlm.nih.gov/geo/series/GSE130nnn/GSE130073/suppl/filelist.txt",
+                "size": "435"
+            },
+            {
+                "filename": "GSE130073_RAW.tar",
+                "url": "ftp.ncbi.nlm.nih.gov/geo/series/GSE130nnn/GSE130073/suppl/GSE130073_RAW.tar",
+                "size": "85841920"
+            }
+        ],
+        "geo_samples": {
+            "GSM3731527": {
+                "accession": "GSM3731527",
+                "supplementary_files": [
+                    {
+                        "filename": "GSM3731527_Human_liver_organoids_barcodes.tsv.gz",
+                        "url": "ftp.ncbi.nlm.nih.gov/geo/samples/GSM3731nnn/GSM3731527/suppl/GSM3731527_Human_liver_organoids_barcodes.tsv.gz",
+                        "size": "17212"
+                    },
+                    {
+                        "filename": "GSM3731527_Human_liver_organoids_cloupe.cloupe.gz",
+                        "url": "ftp.ncbi.nlm.nih.gov/geo/samples/GSM3731nnn/GSM3731527/suppl/GSM3731527_Human_liver_organoids_cloupe.cloupe.gz",
+                        "size": "55634023"
+                    },
+                    {
+                        "filename": "GSM3731527_Human_liver_organoids_genes.tsv.gz",
+                        "url": "ftp.ncbi.nlm.nih.gov/geo/samples/GSM3731nnn/GSM3731527/suppl/GSM3731527_Human_liver_organoids_genes.tsv.gz",
+                        "size": "257294"
+                    },
+                    {
+                        "filename": "GSM3731527_Human_liver_organoids_matrix.mtx.gz",
+                        "url": "ftp.ncbi.nlm.nih.gov/geo/samples/GSM3731nnn/GSM3731527/suppl/GSM3731527_Human_liver_organoids_matrix.mtx.gz",
+                        "size": "29926848"
+                    }
+                ],
+                "platform": {
+                    "accession": "GPL16791",
+                    "title": "Illumina HiSeq 2500 (Homo sapiens)"
+                },
+                "samples": {
+                    "SRS4651465": {
+                        "accession": "SRS4651465",
+                        "title": "Human liver organoids",
+                        "organism": "Homo sapiens",
+                        "attributes": {
+                            "source_name": "Human liver organoids",
+                            "cell type": "iPSC derived human liver organoids",
+                            "cultured day": "day33",
+                            "ENA-SPOT-COUNT": 100085280,
+                            "ENA-BASE-COUNT": 14712536160,
+                            "ENA-FIRST-PUBLIC": "2019-08-01",
+                            "ENA-LAST-UPDATE": "2019-08-01"
+                        },
+                        "experiments": {
+                            "SRX5712719": {
+                                "accession": "SRX5712719",
+                                "title": "Illumina HiSeq 2500 paired end sequencing; GSM3731527: Human liver organoids; Homo sapiens; RNA-Seq",
+                                "platform": "ILLUMINA",
+                                "instrument": "Illumina HiSeq 2500",
+                                "runs": {
+                                    "SRR8931977": {
+                                        "accession": "SRR8931977",
+                                        "experiment": "SRX5712719",
+                                        "study": "SRP193091",
+                                        "sample": "SRS4651465",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3731527: Human liver organoids; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "loader": "fastq-load.py",
+                                            "options": "--readTypes=TTB --read1PairFiles=10X_20933_3hrs_S1_L001_I1_001.fastq.gz --read2PairFiles=10X_20933_3hrs_S1_L001_R1_001.fastq.gz --read3PairFiles=10X_20933_3hrs_S1_L001_R2_001.fastq.gz",
+                                            "ENA-SPOT-COUNT": 48893369,
+                                            "ENA-BASE-COUNT": 7187325243,
+                                            "ENA-FIRST-PUBLIC": "2019-08-01",
+                                            "ENA-LAST-UPDATE": "2019-08-01"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR893/007/SRR8931977/SRR8931977.fastq.gz",
+                                                    "md5": "9f211978e973b36cefc37b82b1dfaa59",
+                                                    "size": 5422810285
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "s3://sra-pub-src-16/SRR8931977/10X_20933_3hrs_S1_L001_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-18/SRR8931977/10X_20933_3hrs_S1_L001_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-17/SRR8931977/10X_20933_3hrs_S1_L001_R2_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR8931977/SRR8931977"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-15/SRR8931978/10X_20933_3hrs_S1_L002_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-15/SRR8931978/10X_20933_3hrs_S1_L002_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-17/SRR8931978/10X_20933_3hrs_S1_L002_R2_001.fastq.gz"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-17/SRR8931977/10X_20933_3hrs_S1_L001_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-16/SRR8931977/10X_20933_3hrs_S1_L001_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-15/SRR8931977/10X_20933_3hrs_S1_L001_R2_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-run-7/SRR8931977/SRR8931977.1"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-18/SRR8931978/10X_20933_3hrs_S1_L002_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-18/SRR8931978/10X_20933_3hrs_S1_L002_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-17/SRR8931978/10X_20933_3hrs_S1_L002_R2_001.fastq.gz"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR8931977/SRR8931977.1"
+                                                },
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos3/sra-pub-run-21/SRR8931978/SRR8931978.1"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "SRR8931978": {
+                                        "accession": "SRR8931978",
+                                        "experiment": "SRX5712719",
+                                        "study": "SRP193091",
+                                        "sample": "SRS4651465",
+                                        "title": "Illumina HiSeq 2500 paired end sequencing; GSM3731527: Human liver organoids; Homo sapiens; RNA-Seq",
+                                        "attributes": {
+                                            "loader": "fastq-load.py",
+                                            "options": "--readTypes=TTB --read1PairFiles=10X_20933_3hrs_S1_L002_I1_001.fastq.gz --read2PairFiles=10X_20933_3hrs_S1_L002_R1_001.fastq.gz --read3PairFiles=10X_20933_3hrs_S1_L002_R2_001.fastq.gz",
+                                            "ENA-SPOT-COUNT": 51191911,
+                                            "ENA-BASE-COUNT": 7525210917,
+                                            "ENA-FIRST-PUBLIC": "2019-08-01",
+                                            "ENA-LAST-UPDATE": "2019-08-01"
+                                        },
+                                        "files": {
+                                            "ftp": [
+                                                {
+                                                    "url": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR893/008/SRR8931978/SRR8931978.fastq.gz",
+                                                    "md5": "a85a097da94935ff827be797bdf26781",
+                                                    "size": 5730738161
+                                                }
+                                            ],
+                                            "aws": [
+                                                {
+                                                    "url": "s3://sra-pub-src-16/SRR8931977/10X_20933_3hrs_S1_L001_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-18/SRR8931977/10X_20933_3hrs_S1_L001_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-17/SRR8931977/10X_20933_3hrs_S1_L001_R2_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR8931977/SRR8931977"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-15/SRR8931978/10X_20933_3hrs_S1_L002_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-15/SRR8931978/10X_20933_3hrs_S1_L002_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "s3://sra-pub-src-17/SRR8931978/10X_20933_3hrs_S1_L002_R2_001.fastq.gz"
+                                                }
+                                            ],
+                                            "gcp": [
+                                                {
+                                                    "url": "gs://sra-pub-src-17/SRR8931977/10X_20933_3hrs_S1_L001_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-16/SRR8931977/10X_20933_3hrs_S1_L001_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-15/SRR8931977/10X_20933_3hrs_S1_L001_R2_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-run-7/SRR8931977/SRR8931977.1"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-18/SRR8931978/10X_20933_3hrs_S1_L002_I1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-18/SRR8931978/10X_20933_3hrs_S1_L002_R1_001.fastq.gz"
+                                                },
+                                                {
+                                                    "url": "gs://sra-pub-src-17/SRR8931978/10X_20933_3hrs_S1_L002_R2_001.fastq.gz"
+                                                }
+                                            ],
+                                            "ncbi": [
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos2/sra-pub-run-15/SRR8931977/SRR8931977.1"
+                                                },
+                                                {
+                                                    "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos3/sra-pub-run-21/SRR8931978/SRR8931978.1"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
