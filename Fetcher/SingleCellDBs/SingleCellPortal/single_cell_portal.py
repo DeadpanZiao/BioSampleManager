@@ -1,9 +1,11 @@
 import requests
+
 from Fetcher.SingleCellDBs import SingleCellDBFetcher
 from utils.DBS.json_file import JsonManager
 
 
-class SingleCellPortal(SingleCellDBFetcher):
+
+class SingleCellPortalFetcher(SingleCellDBFetcher):
     def __init__(self, domain_name="singlecell.broadinstitute.org", datasets_path="/site/studies"):
         super().__init__()
         self.domain_name = domain_name
@@ -11,24 +13,26 @@ class SingleCellPortal(SingleCellDBFetcher):
         self.datasets_url = f"{self.api_url_base}{datasets_path}"
         self.headers = {"Content-Type": "application/json"}
 
-    def fetch(self):
+    def fetch(self, db_name):
         response = requests.get(self.datasets_url, headers=self.headers, verify=False)
         if response.status_code == 200:
             studies = response.json()
-            manager = JsonManager('studies')
+            manager = JsonManager(db_name)
             manager.save(studies)
             self.logger.info("Data saved successfully to JSON file.")
-
+            merged_data = {}
             for study in studies:
                 accessions = study.get('accession', 'N/A')
                 study_url = f"{self.datasets_url}/{accessions}"
                 response = requests.get(study_url, headers=self.headers, verify=False)
                 if response.status_code == 200:
                     study_data = response.json()
-                    manager = JsonManager(f'{accessions}')
-                    manager.save(study_data)
+                    merged_data.update(study_data)
                     self.logger.info(f"Data saved successfully to {accessions}.json file.")
                 else:
                     self.logger.error(f"Failed to retrieve study {accessions}. Status code: {response.status_code}")
+            manager = JsonManager('date')
+            manager.save(merged_data)
         else:
             self.logger.error(f"Failed to retrieve studies. Status code: {response.status_code}")
+
