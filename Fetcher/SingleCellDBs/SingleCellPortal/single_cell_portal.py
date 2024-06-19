@@ -17,8 +17,6 @@ class SingleCellPortalFetcher(SingleCellDBFetcher):
         response = requests.get(self.datasets_url, headers=self.headers, verify=False)
         if response.status_code == 200:
             studies = response.json()
-            manager = JsonManager(db_name)
-            manager.save(studies)
             self.logger.info("Data saved successfully to JSON file.")
             merged_data = {}
             for study in studies:
@@ -31,8 +29,7 @@ class SingleCellPortalFetcher(SingleCellDBFetcher):
                     self.logger.info(f"Data saved successfully to {accessions}.json file.")
                 else:
                     self.logger.error(f"Failed to retrieve study {accessions}. Status code: {response.status_code}")
-            manager = JsonManager('date')
+            manager = JsonManager(db_name)
             manager.save(merged_data)
         else:
             self.logger.error(f"Failed to retrieve studies. Status code: {response.status_code}")
-
