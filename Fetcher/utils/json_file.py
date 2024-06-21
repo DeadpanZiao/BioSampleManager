@@ -1,5 +1,4 @@
 import json
-import os
 
 class JsonManager(object):
     def __init__(self,  filename):

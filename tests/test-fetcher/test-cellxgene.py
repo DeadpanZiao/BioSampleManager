@@ -1,39 +1,28 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, MagicMock
+from Fetcher.SingleCellDBs import CellxgeneFetcher
 
-from Fetcher.SingleCellDBs.Cellxgene.cellxgene import Cellxgene
+class TestCellxgeneFetcher(unittest.TestCase):
 
-
-class TestCellxgene(unittest.TestCase):
-
-    @patch('requests.get')
-    @patch('utils.DBS.json_file.JsonManager.save')
-    def test_fetch(self, mock_json_manager, mock_requests_get):
-        # 创建一个Cellxgene实例
-        cellxgene = Cellxgene()
-
-        # 模拟requests.get方法返回的数据
-        mock_response = Mock()
-        mock_response.json.return_value = {"key": "value"}
-        mock_response.raise_for_status = Mock()
-        mock_requests_get.return_value = mock_response
-
-        # 模拟JsonManager实例和save方法
-        mock_manager_instance = Mock()
+    @patch('Fetcher.SingleCellDBs.Cellxgene.cellxgene.requests.get')
+    @patch('Fetcher.SingleCellDBs.Cellxgene.cellxgene.JsonManager')
+    def test_fetch(self, mock_json_manager, mock_get):
+        # 设置模拟对象
+        mock_response = MagicMock()
+        mock_response.json.return_value = {'data': 'test'}
+        mock_get.return_value = mock_response
+        mock_manager_instance = MagicMock()
         mock_json_manager.return_value = mock_manager_instance
 
-        # 调用fetch方法
-        cellxgene.fetch('cellxgene_data.json')
+        # 创建 CellxgeneFetcher 实例并调用 fetch 方法
+        fetcher = CellxgeneFetcher()
+        fetcher.fetch('db_name')
 
-        # 检查requests.get方法是否被正确调用
-        mock_requests_get.assert_called_once_with(url=cellxgene.datasets_url, headers=cellxgene.headers)
+        # 检查是否正确调用了 requests.get
+        mock_get.assert_called_once_with(url=fetcher.datasets_url, headers=fetcher.headers)
 
-        # # 检查JsonManager构造函数是否被正确调用
-        # mock_json_manager.assert_called_once_with()
-        #
-        # # 检查JsonManager.save方法是否被正确调用
-        # mock_manager_instance.save.assert_called_once_with({"key": "value"})
-
+        # 检查是否正确调用了 JsonManager 的 save 方法
+        mock_manager_instance.save.assert_called_once_with({'data': 'test'})
 
 if __name__ == '__main__':
     unittest.main()

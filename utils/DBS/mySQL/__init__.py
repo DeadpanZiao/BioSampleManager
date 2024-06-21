@@ -1,4 +1,0 @@
-MYSQL_HOST = '0.0.0.0'
-MYSQL_USERNAME = "yourusername"
-MYSQL_PASSWORD = "passwd"
-MYSQL_PORT = 3306

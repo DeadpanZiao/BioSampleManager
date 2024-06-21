@@ -1,11 +1,5 @@
-import logging
-logging.basicConfig(level=logging.INFO)
+from .Cellxgene import *
+from .HumanCellAtlas import *
+from .SingleCellPortal import *
 
-
-class SingleCellDBFetcher(object):
-    def __init__(self):
-        # 设置日志记录器
-        self.logger = logging.getLogger(__name__)
-
-    def fetch(self, db_name):
-        raise NotImplementedError("Subclasses must implement the fetch method.")
+__all__ = ['SingleCellPortalFetcher', 'CellxgeneFetcher']

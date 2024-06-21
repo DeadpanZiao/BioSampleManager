@@ -1,10 +1,9 @@
 import requests
+from Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
+from Fetcher.utils import JsonManager
 
-from Fetcher.SingleCellDBs import SingleCellDBFetcher
-from utils.DBS.json_file import JsonManager
 
-
-class Cellxgene(SingleCellDBFetcher):
+class CellxgeneFetcher(SingleCellDBFetcher):
     def __init__(self, domain_name="cellxgene.cziscience.com", datasets_path="/curation/v1/datasets"):
         super().__init__()
         self.domain_name = domain_name
