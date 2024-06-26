@@ -6,8 +6,8 @@ Fetch, process and manage metadata and data samples for following databases:
 
 - [Cellxgene](https://cellxgene.cziscience.com/datasets)
 
-- [Human Cell Atlas (data explorer)]([https://explore87YWdata.humancellatlas.org/projects](https://explore.data.humancellatlas.org/projects))
+- [Human Cell Atlas (data explorer)](https://explore.data.humancellatlas.org/projects)
 
-- [Broad Institue - single cell portal]([Single Cell Portal (broadinstitute.org)](https://singlecell.broadinstitute.org/single_cell))
+- [Broad Institue - single cell portal](https://singlecell.broadinstitute.org/single_cell)
 
   
