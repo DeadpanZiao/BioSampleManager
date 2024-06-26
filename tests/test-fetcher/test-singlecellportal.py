@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from Fetcher.SingleCellDBs import SingleCellPortalFetcher
+from BSM.Fetcher.SingleCellDBs import SingleCellPortalFetcher
 
 
 class TestSingleCellPortalFetcher(unittest.TestCase):

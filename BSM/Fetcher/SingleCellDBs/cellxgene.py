@@ -1,6 +1,6 @@
 import requests
-from Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
-from Fetcher.utils import JsonManager
+from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
+from BSM.Fetcher.utils import JsonManager
 
 
 class CellxgeneFetcher(SingleCellDBFetcher):
@@ -19,3 +19,5 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         manager = JsonManager(db_name)
         manager.save(data)
         self.logger.info("Data saved successfully to JSON file.")
+f = CellxgeneFetcher()
+f.fetch('db.json')

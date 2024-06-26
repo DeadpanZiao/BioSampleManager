@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from Fetcher.SingleCellDBs import CellxgeneFetcher
+from BSM.Fetcher.SingleCellDBs import CellxgeneFetcher
 
 class TestCellxgeneFetcher(unittest.TestCase):
 

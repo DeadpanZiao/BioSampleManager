@@ -5,7 +5,7 @@ from unittest.mock import call, patch
 from bs4 import BeautifulSoup
 
 
-import BSM.BSM as bsm
+import BSM.ffq as bsm
 from tests.mixins import TestMixin
 from BSM.main import main
 from BSM import __version__

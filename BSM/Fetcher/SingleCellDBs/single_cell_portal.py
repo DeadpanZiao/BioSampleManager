@@ -1,6 +1,6 @@
 import requests
-from Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
-from Fetcher.utils import JsonManager
+from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
+from BSM.Fetcher.utils import JsonManager
 
 class SingleCellPortalFetcher(SingleCellDBFetcher):
     def __init__(self, domain_name="singlecell.broadinstitute.org", datasets_path="/site/studies"):
