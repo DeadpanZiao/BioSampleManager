@@ -25,7 +25,7 @@ class ExploreData(SingleCellDBFetcher):
         manager = JsonManager(file_name)
 
         if os.path.exists(file_name):
-            self.project_meta_data_with_url = manager.load_by_line()
+            self.project_meta_data_with_url = manager.read_large_json()
             exist_entryId = {item['entryId'] for item in self.project_meta_data_with_url}
             fetched_entryId = {item['entryId'] for item in self.project_meta_data}
             missing_entryId = fetched_entryId - exist_entryId
@@ -38,7 +38,7 @@ class ExploreData(SingleCellDBFetcher):
         else:
             projects = self.project_meta_data
         self.fetch_url(projects)
-        manager.save_by_lines(self.project_meta_data_with_url)
+        manager.write_large_json(self.project_meta_data_with_url)
         # with open(file_name, 'w', encoding='utf-8') as f:
         #     for item in tqdm(self.project_meta_data_with_url, desc='Saving JSON'):
         #         json.dump(item, f, ensure_ascii=False)
