@@ -13,7 +13,7 @@ class SingleCellPortalFetcher(SingleCellDBFetcher):
 
     def fetch(self, db_name):
         response = requests.get(self.datasets_url, headers=self.headers, verify=False)
-        if response.status_code == 200:
+        if response.status_code == 200 :
             studies = response.json()
             self.logger.info("Data saved successfully to JSON file.")
             merged_data = []
