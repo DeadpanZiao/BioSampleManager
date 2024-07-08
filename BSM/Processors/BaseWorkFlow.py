@@ -10,6 +10,11 @@ class Workflow:
     def add_module(self, module_name, module, upstream_module_name=None, flag=None):
         self.modules[module_name] = module
         self.execution_count[module.__class__.__name__] = 0  # 初始化每个模块的执行次数为0
+        if not upstream_module_name:
+            if self.root_module:
+                raise ValueError('root module exists, please set module as submodule or change root module')
+            else:
+                self.root_module = module
         if upstream_module_name:
             upstream_module = self.modules[upstream_module_name]
             if flag == 'positive':
@@ -18,7 +23,7 @@ class Workflow:
                 upstream_module.negative_next_module = module
 
     def run_workflow(self, data):
-        current_module = list(self.modules.values())[0]  # 从第一个模块开始
+        current_module = self.root_module
         while current_module:
             data, flag = current_module.process(data)
             self.execution_count[current_module.__class__.__name__] += 1  # 增加模块的执行次数
