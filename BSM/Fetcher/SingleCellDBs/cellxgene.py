@@ -22,11 +22,11 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         self.logger.info("Data saved successfully to JSON file.")
 
     def fetch_collections(self, db_name):
-        res = requests.get(url=self.datasets_url, headers=self.headers)
+        res = requests.get(url=self.collections_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
 
         manager = JsonManager(db_name)
         manager.save(data)
         self.logger.info("Data saved successfully to JSON file.")
-    
+
