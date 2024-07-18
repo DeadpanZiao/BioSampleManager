@@ -1,5 +1,7 @@
 import random
 
+from BSM.DataController import DataController
+
 
 class BaseWorkflowProcessor:
     def __init__(self, positive_next_module=None, negative_next_module=None):
@@ -15,4 +17,7 @@ class BaseWorkflowProcessor:
 class TestBaseWorkflowProcessor(BaseWorkflowProcessor):
     def process(self, data):
         # 返回输入的数据和一个随机的布尔值
+        dc = DataController()
+        data_to_compare = dc.read_all_data()
+        print(data_to_compare)
         return data, random.choice([True, False])

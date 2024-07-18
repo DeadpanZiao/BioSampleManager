@@ -38,7 +38,7 @@ first_module = TestBaseWorkflowProcessor()
 workflow.add_module("Module0", first_module)
 
 # 添加剩余的模块
-for i in range(1, 10):
+for i in range(1, 2):
     module_name = f"Module{i}"
     module = TestBaseWorkflowProcessor()
     workflow.add_module(module_name, module, upstream_module_name=f"Module{i-1}", flag='positive')
