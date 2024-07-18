@@ -11,7 +11,7 @@ class BaseWorkflowProcessor:
     def process(self, data):
         # 这是数据处理模块的核心方法，每个具体的数据处理模块需要实现这个方法
         # 这个方法需要返回处理过的数据和一个标识符
-        raise NotImplementedError("Subclasses must implement process_data method")
+        raise NotImplementedError("Subclasses must implement process method")
 
 
 class TestBaseWorkflowProcessor(BaseWorkflowProcessor):
