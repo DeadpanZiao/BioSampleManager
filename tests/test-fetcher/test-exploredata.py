@@ -1,7 +1,5 @@
 # import unittest
-from unittest.mock import patch, Mock
-
-from Fetcher.SingleCellDBs.ExploreData.exploredata import ExploreData
+from BSM.Fetcher.SingleCellDBs import ExploreDataFetcher
 
 
 # class TestExploredata(unittest.TestCase):
@@ -37,6 +35,6 @@ from Fetcher.SingleCellDBs.ExploreData.exploredata import ExploreData
 
 if __name__ == '__main__':
     # unittest.main()
-    exploredata = ExploreData()
+    exploredata = ExploreDataFetcher()
     exploredata.fetch('exploredata.json')
     # print(len(project_data))

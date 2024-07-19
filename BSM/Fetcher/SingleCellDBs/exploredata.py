@@ -5,11 +5,11 @@ import urllib.parse
 from collections import defaultdict
 import os
 
-from Fetcher.SingleCellDBs import SingleCellDBFetcher
-from utils.DBS.json_file import JsonManager
+from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
+from BSM.Fetcher.utils import JsonManager
 
 
-class ExploreData(SingleCellDBFetcher):
+class ExploreDataFetcher(SingleCellDBFetcher):
     def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp38&order=asc&sort=projectTitle&filters=%7B%7D',
                  files_url=r'https://service.azul.data.humancellatlas.org/index/files'):
         super().__init__()

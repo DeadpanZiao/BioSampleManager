@@ -8,7 +8,7 @@ from BSM.exceptions import CliError, InvalidAccession, FfqException, FailToFetch
 from BSM.utils import findkey
 
 from . import __version__
-from .BSM import (
+from .ffq import (
     ffq_doi,
     ffq_gse,
     ffq_run,
