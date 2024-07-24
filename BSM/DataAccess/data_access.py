@@ -126,5 +126,3 @@ class DataAccess:
 # }
 # db.insert(data_to_insert)
 # res = db.query()
-# # 关闭数据库连接
-# db.close()
