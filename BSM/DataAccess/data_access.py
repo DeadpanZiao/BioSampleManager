@@ -103,7 +103,7 @@ class DataAccess:
         except Exception as e:
             result = {'status': 'error', 'message': str(e)}
 
-        self.logger.info(f'Query operation: {result}')
+        self.logger.info(f'Query operation: {result["status"]}')
         return result
 
     def close(self):
