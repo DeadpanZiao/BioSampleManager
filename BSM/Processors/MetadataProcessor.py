@@ -194,36 +194,36 @@ if __name__ == "__main__":
 
     # ---------test HCA-----------
     # test1: 随机一条数据
-    json_file2 = "../../DBS/exploredata_json.json"
-    jf2 = JsonManager(json_file2)
-    data2 = jf2.read_large_json()
-    num = random.randint(0, len(data2))
-    input_data2 = data2[num]
+    # json_file2 = "../../DBS/exploredata_json.json"
+    # jf2 = JsonManager(json_file2)
+    # data2 = jf2.read_large_json()
+    # num = random.randint(0, len(data2))
+    # input_data2 = data2[num]
 
     # test2: 构造一条模拟数据
-    # input_data2 = {
-    #     "protocols":[
-    #             {"workflow": ["raw_matrix_generation"]},
-    #             {
-    #                 "libraryConstructionApproach": ["10x 3' v3"],
-    #                 "nucleicAcidSource": ["cell"]
-    #             }
-    #     ],
-    #     "projects": [
-    #         {"contributedAnalyses" : {
-    #             "genusSpecies" : {"Homo sapiens": {}},
-    #             "organ" : {"breast": {}}
-    #         }}
-    #     ],
-    #     "specimens": [{
-    #         "organ": ["breast"],
-    #         "disease": ["normal"],
-    #     }],
-    #     "donorOrganisms": [
-    #         {"genusSpecies": ["Homo sapiens"]}
-    #     ],
-    #     "cellSuspensions": [{"organ": ["heart"]}],
-    # }
+    input_data2 = {
+        "protocols":[
+                {"workflow": ["raw_matrix_generation"]},
+                {
+                    "libraryConstructionApproach": ["10x 3' v3"],
+                    "nucleicAcidSource": ["cell"]
+                }
+        ],
+        "projects": [
+            {"contributedAnalyses" : {
+                "genusSpecies" : {"Homo sapiens": {}},
+                "organ" : {"breast": {}}
+            }}
+        ],
+        "specimens": [{
+            "organ": ["breast"],
+            "disease": ["normal"],
+        }],
+        "donorOrganisms": [
+            {"genusSpecies": ["Homo sapiens"]}
+        ],
+        "cellSuspensions": [{"organ": ["heart"]}],
+    }
 
     db_name = "HCA"
     mp = MetadataProcessor(db_name)
