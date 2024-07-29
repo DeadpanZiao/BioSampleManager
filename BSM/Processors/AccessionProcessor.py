@@ -1,16 +1,15 @@
 import re
-
-from BSM.DataController import DataController
 from BSM.Processors.BaseWorkflowProcessor import BaseWorkflowProcessor
 
 
 class SCPAccessionProcessor(BaseWorkflowProcessor):
     def process(self, data):
         accession = d['accession']
-        data_to_compare = self.dc.read_all_data() # list of dict
+        data_to_compare = self.dc.read_all_data()  # list of dict
         flag = self.match_string_to_list_of_dicts(search_strings=[accession], list_of_dicts=data_to_compare,
                                                   keys_to_search=['INSDC_project', 'INSDC_study', 'GEO'])
         return data, flag
+
 
 class CXGAccessionProcessor(BaseWorkflowProcessor):
     def process(self, data):
@@ -18,12 +17,10 @@ class CXGAccessionProcessor(BaseWorkflowProcessor):
         gse_pattern = re.compile(r'GSE\d+')
         gse_values = set()
         for link in links:
-            # 搜索link_name中的GSE值
             match_name = gse_pattern.search(link.get('link_name', ''))
             if match_name:
                 gse_values.add(match_name.group())
 
-            # 搜索link_url中的GSE值
             match_url = gse_pattern.search(link.get('link_url', ''))
             if match_url:
                 gse_values.add(match_url.group())
@@ -32,6 +29,8 @@ class CXGAccessionProcessor(BaseWorkflowProcessor):
         flag = self.match_string_to_list_of_dicts(search_strings=gse_values, list_of_dicts=data_to_compare,
                                                   keys_to_search=['INSDC_project', 'INSDC_study', 'GEO'])
         return data, flag
+
+
 class HCAAccessionProcessor(BaseWorkflowProcessor):
     def process(self, data):
         acc = data['projects'][0]['accessions']
@@ -54,6 +53,7 @@ class HCAAccessionProcessor(BaseWorkflowProcessor):
                                                   keys_to_search=['INSDC_project', 'INSDC_study', 'GEO'])
         return data, flag
 
+
 import json
 
 proc = HCAAccessionProcessor()
@@ -63,4 +63,3 @@ with open(file_path, 'r', encoding='utf-8') as file:
     data = json.load(file)
 for d in data[:]:
     proc.process(d)
-
