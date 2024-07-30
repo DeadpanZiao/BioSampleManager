@@ -1,3 +1,4 @@
+import json
 import requests
 from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
 from BSM.Fetcher.utils import JsonManager
@@ -12,21 +13,36 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         self.collections_url = f"{self.api_url_base}/collections"
         self.headers = {"Content-Type": "application/json"}
 
-    def fetch(self, db_name):
+    def fetch(self):
         res = requests.get(url=self.datasets_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
+        return data
 
-        manager = JsonManager(db_name)
-        manager.save(data)
-        self.logger.info("Data saved successfully to JSON file.")
-
-    def fetch_collections(self, db_name):
+    def fetch_collections(self):
         res = requests.get(url=self.collections_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
+        return data
+
+    def fetch_merger(self, db_name):
+        collections = self.fetch_collections()
+        dataset = self.fetch()
+
+        data1 = json.load(collections)
+        data2 = json.load(dataset)
+
+        merged_data = []
+        for obj in data1:
+            datasets = obj.get('datasets', [])
+            for dataset in datasets:
+                dataset_id1 = dataset.get('dataset_id')
+                for i in data2:
+                    dataset_id2 = i.get('dataset_id')
+                    if dataset_id1 == dataset_id2:
+                        dataset.update(i)
+                        merged_data.append(obj)
 
         manager = JsonManager(db_name)
-        manager.save(data)
+        manager.save(merged_data)
         self.logger.info("Data saved successfully to JSON file.")
-
