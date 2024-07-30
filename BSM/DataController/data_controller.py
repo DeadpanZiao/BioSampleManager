@@ -1,3 +1,5 @@
+import os
+
 from BSM.DataAccess import DataAccess
 from BSM.DataAccess.data_access import ProjectAccess, SampleAccess
 
@@ -64,9 +66,11 @@ class SampleController:
 # Example usage
 if __name__ == "__main__":
     db_name = '../../DBS/projects.db'
+    if not os.path.exists('../../DBS'):
+        os.mkdir('../../DBS')
     # insert sample
     test_sample= {
-        "source_sample_id": "SS1234567",
+        "source_sample_id": "SS12345678",
         "project_id": "PRJ1234",
         "datasetID": "DS001",
         "experiment_id": "EXP12345",
@@ -118,7 +122,7 @@ if __name__ == "__main__":
 
     # insert project
     test_publication = (
-    '10.1038/s41590-022-01165-333', 34925200, None, 'dataset1', 'Title of the article', 'Author Name', 12345, 123456,
+    '10.1038/s41590-022-01165-3333', 34925200, None, 'dataset1', 'Title of the article', 'Author Name', 12345, 123456,
     '2022-07-27', 'Full Journal Name', 'Journal Abbreviation', '2022-07-27', 'Article', 'Abstract of the article',
     'keyword1, keyword2', 'pub_status', 'mesh_term', 'fulltext_link', 'topic')
     controller = ProjectController(db_name)
