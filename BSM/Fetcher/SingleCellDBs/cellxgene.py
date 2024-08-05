@@ -13,7 +13,7 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         self.collections_url = f"{self.api_url_base}/collections"
         self.headers = {"Content-Type": "application/json"}
 
-    def fetch(self):
+    def fetch_dataset(self):
         res = requests.get(url=self.datasets_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
@@ -25,12 +25,12 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         data = res.json()
         return data
 
-    def fetch_merger(self, db_name):
+    def fetch(self, db_name):
         collections = self.fetch_collections()
-        dataset = self.fetch()
+        dataset = self.fetch_dataset()
 
-        data1 = json.load(collections)
-        data2 = json.load(dataset)
+        data1 = collections
+        data2 = dataset
 
         merged_data = []
         for obj in data1:
@@ -46,3 +46,6 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         manager = JsonManager(db_name)
         manager.save(merged_data)
         self.logger.info("Data saved successfully to JSON file.")
+
+f = CellxgeneFetcher()
+f.fetch('test.json')
