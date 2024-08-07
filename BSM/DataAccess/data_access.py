@@ -302,13 +302,13 @@ class SampleAccess:
             self.logger.error(f"Failed to update record: {e}")
             return {"status": "error", "data": str(e)}
 
-    def get_publication_by_doi(self, doi):
+    def get_sample_by_doi(self, doi):
         query = f"SELECT * FROM {self.table_name} WHERE doi=?"
         try:
             self.cursor.execute(query, (doi,))
             row = self.cursor.fetchone()
             if row is not None:
-                result = dict(zip(self.publication_columns, row))
+                result = dict(zip(self._columns, row))
                 self.logger.info(f"Retrieved record with DOI {doi}.")
                 return {"status": "success", "data": result}
             else:
