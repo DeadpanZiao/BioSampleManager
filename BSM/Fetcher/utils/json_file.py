@@ -3,14 +3,17 @@ import ijson
 from pandas import json_normalize
 import pandas as pd
 import os
+
+from tqdm import tqdm
+
+
 class JsonManager(object):
-    def __init__(self,  filename):
+    def __init__(self, filename):
         self.filename = filename
 
     def save(self, data):
         with open(self.filename, 'w') as file:
             json.dump(data, file, indent=4)
-
 
     def write_large_json(self, data):
         with open(self.filename, 'w', encoding='utf-8') as f:
@@ -29,6 +32,23 @@ class JsonManager(object):
             for item in ijson.items(f, 'item'):
                 items.append(item)
         return items
+
+    def save_by_lines(self, data):
+        with open(self.filename, 'w', encoding='utf-8') as f:
+            for item in tqdm(data, desc='Saving JSON'):
+                json.dump(item, f, ensure_ascii=False)
+                f.write('\n')
+
+    def load_by_line(self):
+        json_list = []
+        # 逐行读取JSON文件并解析
+        with open(self.filename, 'r', encoding='utf-8') as f:
+            for line in f:
+                # 解析JSON字符串为字典
+                item = json.loads(line)
+                json_list.append(item)
+
+        return json_list
 
     def json_to_csv(self, folder_path, outpath, csv_name, max_length=35000):
         with open(folder_path, 'r') as f:
