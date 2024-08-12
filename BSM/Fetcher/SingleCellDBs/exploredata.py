@@ -10,7 +10,7 @@ from BSM.Fetcher.utils import JsonManager
 
 
 class ExploreDataFetcher(SingleCellDBFetcher):
-    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp38&order=asc&sort=projectTitle&filters=%7B%7D',
+    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp40&order=asc&sort=projectTitle&filters=%7B%7D',
                  files_url=r'https://service.azul.data.humancellatlas.org/index/files'):
         super().__init__()
         self.project_meta_data = []
@@ -71,7 +71,7 @@ class ExploreDataFetcher(SingleCellDBFetcher):
         for project in tqdm(projects, desc='Processing Project'):
             entry_id = project.get('entryId')
             params = {
-                "catalog": "dcp38",
+                "catalog": "dcp40",
                 "filters": json.dumps({"projectId": {"is": [entry_id]}}),
                 "size": 1000
             }
@@ -116,3 +116,6 @@ class ExploreDataFetcher(SingleCellDBFetcher):
                         pbar.update(data['pagination']['count'])
             project['files'] = aggregated_data
             self.project_meta_data_with_url.append(project)
+
+f = ExploreDataFetcher()
+f.fetch('hca.json')
