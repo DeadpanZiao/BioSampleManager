@@ -3,45 +3,6 @@ import os
 from BSM.DataAccess.data_access import SampleAccess
 
 
-# class DataController:
-#     def __init__(self, db_name='../../DBS/test.db'):
-#         self.data_access = DataAccess(db_name)
-#
-#     def read_all_data(self):
-#         try:
-#             result = self.data_access.query()
-#             if result['status'] == 'success':
-#                 return result['data']
-#             else:
-#                 return None
-#         except Exception as e:
-#             return None
-#
-#     def close(self):
-#         self.data_access.close()
-#
-#
-# class ProjectController:
-#     def __init__(self, db_name='../../DBS/test.db'):
-#         self.data_access = ProjectAccess(db_name)
-#
-#     def insert_project(self, publication):
-#         try:
-#             if isinstance(publication, dict):
-#                 publication = tuple(publication.values())
-#             result = self.data_access.insert_publication(publication)
-#             if result['status'] == 'success':
-#                 result['data'] = publication
-#                 return result
-#             else:
-#                 return result
-#         except Exception as e:
-#             return 'insert project failed'
-#
-#     def close(self):
-#         self.data_access.close()
-
-
 class SampleController:
     def __init__(self, db_name='../../DBS/test.db'):
         self.data_access = SampleAccess(db_name)
@@ -56,11 +17,7 @@ class SampleController:
 
         try:
             result = self.data_access.insert_sample(sample)
-            if result['status'] == 'success':
-                result['data'] = sample
-                return result
-            else:
-                return result
+            return result
         except Exception as e:
             return {"status": "error", "data": str(e)}
 
