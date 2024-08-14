@@ -234,8 +234,8 @@ if __name__ == "__main__":
 
 
     # 批量抽取保存为json
-    start_time = time.time()
     results,failed_tasks = extractor.extract_batch(input_metadata_list,max_workers=20) # 批量抽取，可以调整max_workers
+    print(failed_tasks)
     for result in results:
         task_id = result[0]
         content = result[1] # 每条抽取结果
@@ -245,6 +245,3 @@ if __name__ == "__main__":
         ######### 修改json保存路径
         result_json_path = f"../../../Bio Data/kimi_output/{generate_json_name(data_source, task_id+1)}.json"
         save_json_file(result_data, result_json_path)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"运行时间：{elapsed_time}秒")
