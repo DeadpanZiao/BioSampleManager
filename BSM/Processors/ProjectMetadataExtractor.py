@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
     # 批量抽取保存为json
     results,failed_tasks = extractor.extract_batch(input_metadata_list,max_workers=20) # 批量抽取，可以调整max_workers
-    print(failed_tasks)
+    print(f"failed tasks of {data_source}: {failed_tasks}")
     for result in results:
         task_id = result[0]
         content = result[1] # 每条抽取结果
