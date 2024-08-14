@@ -1,35 +1,118 @@
 import requests
+from tqdm import tqdm
+import json
+import urllib.parse
+from collections import defaultdict
+import os
+
 from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
 from BSM.Fetcher.utils import JsonManager
 
-class SingleCellPortalFetcher(SingleCellDBFetcher):
-    def __init__(self, domain_name="singlecell.broadinstitute.org", datasets_path="/site/studies"):
+
+class ExploreDataFetcher(SingleCellDBFetcher):
+    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp38&order=asc&sort=projectTitle&filters=%7B%7D',
+                 files_url=r'https://service.azul.data.humancellatlas.org/index/files'):
         super().__init__()
-        self.domain_name = domain_name
-        self.api_url_base = f"https://{domain_name}/single_cell/api/v1"
-        self.datasets_url = f"{self.api_url_base}{datasets_path}"
-        self.headers = {"Content-Type": "application/json"}
+        self.project_meta_data = []
+        self.project_meta_data_with_url = []
+        self.project_url = project_url
+        self.files_url = files_url
+        self.headers = {'Accept': 'application/json, text/plain, */*'}
 
-    def fetch(self, db_name):
-        response = requests.get(self.datasets_url, headers=self.headers, verify=False)
-        if response.status_code == 200:
-            studies = response.json()
-            manager = JsonManager(db_name)
-            manager.save(studies)
-            self.logger.info("Data saved successfully to JSON file.")
-            merged_data = {}
-            for study in studies:
-                accessions = study.get('accession', 'N/A')
-                study_url = f"{self.datasets_url}/{accessions}"
-                response = requests.get(study_url, headers=self.headers, verify=False)
-                if response.status_code == 200:
-                    study_data = response.json()
-                    merged_data.update(study_data)
-                    self.logger.info(f"Data saved successfully to {accessions}.json file.")
-                else:
-                    self.logger.error(f"Failed to retrieve study {accessions}. Status code: {response.status_code}")
-            manager = JsonManager('date')
-            manager.save(merged_data)
+    def fetch(self, file_name):
+
+        self.fetch_project()
+        manager = JsonManager(file_name)
+
+        if os.path.exists(file_name):
+            self.project_meta_data_with_url = manager.load_by_line()
+            exist_entryId = {item['entryId'] for item in self.project_meta_data_with_url}
+            fetched_entryId = {item['entryId'] for item in self.project_meta_data}
+            missing_entryId = fetched_entryId - exist_entryId
+            if not missing_entryId:
+                self.logger.info("No New Projects!")
+                return
+            projects = [item for item in self.project_meta_data if item['entryId'] in missing_entryId]
+            self.logger.info(f"find {len(projects)} New Projects! Fetching ...")
+            # print(projects)
         else:
-            self.logger.error(f"Failed to retrieve studies. Status code: {response.status_code}")
+            projects = self.project_meta_data
+        self.fetch_url(projects)
+        manager.save_by_lines(self.project_meta_data_with_url)
+        # with open(file_name, 'w', encoding='utf-8') as f:
+        #     for item in tqdm(self.project_meta_data_with_url, desc='Saving JSON'):
+        #         json.dump(item, f, ensure_ascii=False)
+        #         f.write('\n')
+        self.logger.info("Data saved successfully to JSON file.")
 
+    def fetch_project(self):
+        url = self.project_url
+
+        response = requests.get(url)
+        response.raise_for_status()  # 如果请求失败，抛出异常
+        # 解析JSON数据
+        data = response.json()
+        total = data['pagination']['total']
+        with tqdm(total=total, desc='Fetching Project Data', initial=data['pagination']['count']) as pbar:
+            while url:
+                # 提取“hits”字段
+                hits = data.get('hits', [])
+                self.project_meta_data.extend(hits)
+                # 获取下一页的URL
+                pagination = data.get('pagination', {})
+                url = pagination.get('next', None)
+                if url:
+                    response = requests.get(url)
+                    response.raise_for_status()  # 如果请求失败，抛出异常
+                    data = response.json()
+                    pbar.update(data['pagination']['count'])
+
+    def fetch_url(self, projects):
+        for project in tqdm(projects, desc='Processing Project'):
+            entry_id = project.get('entryId')
+            params = {
+                "catalog": "dcp38",
+                "filters": json.dumps({"projectId": {"is": [entry_id]}}),
+                "size": 1000
+            }
+            url = f"{self.files_url}?{urllib.parse.urlencode(params)}"
+            while True:
+                try:
+                    response = requests.get(url)
+                    if response.status_code == 200:
+                        break
+                except Exception as e:
+                    tqdm.write(str(e))
+            data = response.json()
+            total = data['pagination']['total']
+            aggregated_data = defaultdict(list)
+            with tqdm(total=total, desc='Fetching Project URLs', initial=data['pagination']['count']) as pbar:
+                while url:
+
+                    # 提取“hits”字段
+                    hits = data.get('hits', [])
+                    # 处理每个hit的files字段
+                    for hit in hits:
+                        files = hit.get('files', [])
+                        for file in files:
+                            file_format = file.get('format')
+                            file_url = file.get('url')
+                            if file_format and file_url:
+                                file.pop('format')
+                                aggregated_data[file_format].append(file)
+
+                    # 获取下一页的URL
+                    pagination = data.get('pagination', {})
+                    url = pagination.get('next', None)
+                    if url:
+                        while True:
+                            try:
+                                response = requests.get(url)
+                                if response.status_code == 200:
+                                    break
+                            except Exception as e:
+                                tqdm.write(str(e))
+                        data = response.json()
+                        pbar.update(data['pagination']['count'])
+            project['files'] = aggregated_data
+            self.project_meta_data_with_url.append(project)
