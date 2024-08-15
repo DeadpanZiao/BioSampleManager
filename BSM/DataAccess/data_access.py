@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import logging
 
@@ -12,6 +13,8 @@ class SampleAccess:
             "project_description", "disease", "species", "organ","technology_name",
             "library_strategy",  "nuclei_extraction", "dataset_source", "raw_json"
         ]
+        self.list_columns = ["dataset","pmid", "pmcid", "doi", "other_ids", "organ", "technology_name", "disease",
+                             "species", "topic", "technology_name", "library_strategy"]
         self.setup_logging()
         self.create_table()
 
@@ -26,13 +29,27 @@ class SampleAccess:
         self.logger.addHandler(console_handler)
 
     def create_table(self):
-        # Add an auto-incrementing integer column as the primary key
-        columns = ', '.join([f"{col} TEXT" if col != 'internal_id' else f"{col} INTEGER PRIMARY KEY AUTOINCREMENT" for col in self._columns])
-        query = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({columns})"
+        # Define which columns should be able to store JSON lists
+        list_columns = self.list_columns
+
+        # Construct the columns definition
+        columns = []
+        for col in self._columns:
+            if col in list_columns:
+                columns.append(f"{col} TEXT")  # Store as TEXT because we'll serialize the list to JSON
+            elif col == 'internal_id':
+                columns.append(f"{col} INTEGER PRIMARY KEY AUTOINCREMENT")
+            else:
+                columns.append(f"{col} TEXT")
+
+        columns_def = ', '.join(columns)
+
+        query = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({columns_def})"
+
         try:
             self.cursor.execute(query)
             self.conn.commit()
-            self.logger.info("Table created successfully.")
+            self.logger.debug("Table created successfully.")
             return {"status": "success", "data": None}
         except Exception as e:
             self.logger.error(f"Failed to create table: {e}")
@@ -41,10 +58,19 @@ class SampleAccess:
     def insert_sample(self, data):
         # Add the internal_id to the dictionary with a value of None so it gets auto-generated
         data['internal_id'] = None
+
+        # Serialize list fields to JSON
+        list_fields = self.list_columns
+        for field in list_fields:
+            if field in data and isinstance(data[field], list):
+                data[field] = json.dumps(data[field])  # Serialize list to JSON string
+        if 'raw_json' in data and isinstance(data['raw_json'], dict):
+            data['raw_json'] = json.dumps(data['raw_json'])  # Serialize dict to JSON string
         placeholders = ', '.join(['?'] * len(data))
         columns = ', '.join(data.keys())
         values = tuple(data.values())
         query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
+
         try:
             self.cursor.execute(query, values)
             self.conn.commit()
@@ -58,45 +84,64 @@ class SampleAccess:
             self.logger.error(f"Failed to insert record: {e}")
             return {"status": "error", "data": str(e)}
 
-    def delete_sample(self, doi):
-        query = f"DELETE FROM {self.table_name} WHERE doi=?"
-        try:
-            self.cursor.execute(query, (doi,))
-            self.conn.commit()
-            self.logger.info(f"Record with DOI {doi} deleted successfully.")
-            return {"status": "success", "data": None}
-        except Exception as e:
-            self.logger.error(f"Failed to delete record: {e}")
-            return {"status": "error", "data": str(e)}
+    def check_if_exists(self, dataset, pmid, pmcid, doi):
+        # Prepare the conditions for the SQL query
+        conditions = []
+        params = []
 
-    def update_sample(self, doi, data):
-        set_clause = ', '.join([f"{k} = ?" for k in data.keys()])
-        values = tuple(data.values()) + (doi,)
-        query = f"UPDATE {self.table_name} SET {set_clause} WHERE doi=?"
-        try:
-            self.cursor.execute(query, values)
-            self.conn.commit()
-            self.logger.info(f"Record with DOI {doi} updated successfully.")
-            return {"status": "success", "data": None}
-        except Exception as e:
-            self.logger.error(f"Failed to update record: {e}")
-            return {"status": "error", "data": str(e)}
+        # Convert lists to JSON strings for comparison
+        if isinstance(dataset, list):
+            dataset_str = json.dumps(dataset)
+            conditions.append("dataset LIKE ? OR dataset LIKE ?")
+            params.extend([f'%{dataset_str}%', f'%{json.dumps(json.loads(dataset_str) + ["%"])}%'])
+        elif dataset is not None:
+            conditions.append("dataset = ?")
+            params.append(dataset)
 
-    def get_sample_by_doi(self, doi):
-        query = f"SELECT * FROM {self.table_name} WHERE doi=?"
-        try:
-            self.cursor.execute(query, (doi,))
-            row = self.cursor.fetchone()
-            if row is not None:
-                result = dict(zip(self._columns, row))
-                self.logger.info(f"Retrieved record with DOI {doi}.")
-                return {"status": "success", "data": result}
-            else:
-                self.logger.warning(f"No record found with DOI {doi}.")
-                return {"status": "not_found", "data": None}
-        except Exception as e:
-            self.logger.error(f"Failed to retrieve record: {e}")
-            return {"status": "error", "data": str(e)}
+        if isinstance(pmid, list):
+            pmid_str = json.dumps(pmid)
+            conditions.append("pmid LIKE ? OR pmid LIKE ?")
+            params.extend([f'%{pmid_str}%', f'%{json.dumps(json.loads(pmid_str) + ["%"])}%'])
+        elif pmid is not None:
+            conditions.append("pmid = ?")
+            params.append(pmid)
+
+        if isinstance(pmcid, list):
+            pmcid_str = json.dumps(pmcid)
+            conditions.append("pmcid LIKE ? OR pmcid LIKE ?")
+            params.extend([f'%{pmcid_str}%', f'%{json.dumps(json.loads(pmcid_str) + ["%"])}%'])
+        elif pmcid is not None:
+            conditions.append("pmcid = ?")
+            params.append(pmcid)
+
+        if isinstance(doi, list):
+            doi_str = json.dumps(doi)
+            conditions.append("doi LIKE ? OR doi LIKE ?")
+            params.extend([f'%{doi_str}%', f'%{json.dumps(json.loads(doi_str) + ["%"])}%'])
+        elif doi is not None:
+            conditions.append("doi = ?")
+            params.append(doi)
+        if not conditions:
+            conditions.append("1=1")
+        # Construct the SQL query
+        check_query = """
+        SELECT COUNT(*), dataset, pmid, pmcid, doi FROM {table_name}
+        WHERE {conditions}
+        """.format(table_name=self.table_name, conditions=" AND ".join(conditions))
+
+        # Execute the query
+        self.cursor.execute(check_query, params)
+        result = self.cursor.fetchone()
+
+        if result and result[0] > 0:
+            # Record exists
+            existing_dataset, existing_pmid, existing_pmcid, existing_doi = result[1:]
+            self.logger.info(f"Record already exists with the following values: "
+                             f"dataset={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, doi={existing_doi}")
+            return True
+        else:
+            return False
 
     def close(self):
         self.conn.close()
+

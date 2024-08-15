@@ -1,3 +1,6 @@
+import logging
+import math
+
 from BSM.DataController import data_controller
 import re
 import json
@@ -6,6 +9,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI
+
+from BSM.DataController.data_controller import SampleController
+
 source_info = [
         {"type": "cxg", "file_name": "cellxgene", "dataset_source": "CellxGene"},
         {"type": "hca", "file_name": "exploredata", "dataset_source": "Human Cell Atlas"},
@@ -43,7 +49,6 @@ class ProjectMetadataExtractor():
             f"\nRemember to respond with a markdown code snippet of a json blob, and NOTHING else, NO EXPLANATION\n"
             f"Note that in cases where information is not available, please respond with `null`.\n"
             f"Note that if a list of choices is given, select the closest description.")
-
         return prompt
 
     def _parse_json_from_response(self,response):
@@ -136,7 +141,7 @@ class ProjectMetadataExtractor():
                     result = future.result()
                     results.append((task_id,result))
                 except Exception as e:
-                    print(f"处理第{task_id}个数据项时发生错误：{e}")
+                    print(f"error processing task {task_id}: {e}")
                     failed_tasks.append(task_id)
                 finally:
                     progress_bar.update(1)
@@ -166,82 +171,3 @@ def special_prompt():
     return {"normal":desc_normal, "cxg": desc_cxg, "hca": desc_hca, "scp": desc_scp}
 
 
-def read_json_file(file_path):
-    with open(file_path, 'r', encoding="utf-8") as file:
-        data = json.load(file)
-    return data
-
-
-def read_excel_file(file_path):
-    df = pd.read_excel(file_path,header=0)
-    data = df.to_dict(orient='records')
-    return data
-
-def save_json_file(data, file_path):
-    with open(file_path, 'w', encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
-
-def convert_data_for_insert(data_dict):
-    # 将数据字典中所有取值为list的转换为纯字符串
-    result = {}
-    for key,value in data_dict.items():
-        if value is None:
-            pass
-        elif type(value).__name__ == 'list':
-            string_value = json.dumps(value, ensure_ascii=False)
-            result[key] = string_value
-        else:
-            result[key] = value
-
-    return result
-
-def generate_json_name(data_source,current_number):
-     json_name = f"{data_source}_{current_number:06d}"
-     return json_name
-
-
-if __name__ == "__main__":
-    API_URL = "https://api.moonshot.cn/v1/"
-    API_KEY = ""    ######### Commit记得删除！！！
-    MODEL = "moonshot-v1-128k"  ########## 可用8k、32k、128k
-
-    # 数据文件
-    data_source = 'scp'
-    for item in source_info:
-        if item["type"] == data_source:
-            file_name = item["file_name"]
-            break
-    input_metadata_list = read_json_file(f"../../DBS/{file_name}.json") # 原始json数据路径
-    print(len(input_metadata_list))
-    json_schema = read_excel_file("../../DBS/json_schema.xlsx") # json_schema路径
-    extractor = ProjectMetadataExtractor(data_source, API_URL, API_KEY, MODEL, json_schema)
-
-
-    # # 测试单条抽取保存为json
-    # number = 1    # 第几条数据
-    # start_time = time.time()
-    # result = extractor.extract_single(input_metadata_list[number-1])
-    # print(f"output:\n{result[0]}")
-    # print(f"token_usage:\n{result[1]}")
-    # result_data = extractor.post_process_data(result)
-    # print(result_data)
-    # result_json_path = f"../../../Bio Data/kimi_output_test/{generate_json_name(data_source,number)}.json"
-    # save_json_file(result_data,result_json_path)
-    # end_time = time.time()
-    # elapsed_time = end_time - start_time  # 计算运行时间
-    # print(f"运行时间：{elapsed_time}秒")
-
-
-    # 批量抽取保存为json
-    results,failed_tasks = extractor.extract_batch(input_metadata_list,max_workers=20) # 批量抽取，可以调整max_workers
-    print(f"failed tasks of {data_source}: {failed_tasks}")
-    for result in results:
-        task_id = result[0]
-        content = result[1] # 每条抽取结果
-        # print(content)
-        result_data = extractor.post_process_data(content)  # 处理成保存json需要的内容
-        # print(result_data)
-        ######### 修改json保存路径
-        result_json_path = f"../../../Bio Data/kimi_output/{generate_json_name(data_source, task_id+1)}.json"
-        save_json_file(result_data, result_json_path)
