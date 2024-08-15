@@ -2,10 +2,15 @@ from BSM.DataController import data_controller
 import re
 import json
 import pandas as pd
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI
-
+source_info = [
+        {"type": "cxg", "file_name": "cellxgene", "dataset_source": "CellxGene"},
+        {"type": "hca", "file_name": "exploredata", "dataset_source": "Human Cell Atlas"},
+        {"type": "scp", "file_name": "singlecellportal", "dataset_source": "Single Cell Portal"}
+    ]
 
 class ProjectMetadataExtractor():
     def __init__(self,data_source:str,api_url:str,api_key:str,model_name:str,json_schema:list):
@@ -20,6 +25,7 @@ class ProjectMetadataExtractor():
             openai_api_base=self.api_url,
             openai_api_key=self.api_key,
             model_name=self.model_name,
+            temperature=0.1,
         )
         return llm.invoke(prompt)
 
@@ -79,7 +85,7 @@ class ProjectMetadataExtractor():
                 result[field] = None
 
         for key, value in result.items():
-            if key in ['dataset', 'pmid', 'pmcid', 'doi'] and value is not None:
+            if key in ['dataset', 'pmid', 'pmcid', 'doi', 'other_ids', 'technology_name'] and value is not None:
                 input_str = json.dumps(input_metadata, ensure_ascii=False)
                 new_value = []
                 for item in value:
@@ -94,10 +100,19 @@ class ProjectMetadataExtractor():
 
         return result
 
+    def pre_process_data(self,input_metadata):
+        # if hca, remove the "files" element
+        if self.data_source == "hca":
+            result = {key:value for key,value in input_metadata.items() if key != "files"}
+            return result
+        else:
+            return input_metadata
+
 
     def extract_single(self,input_metadata:dict):
+        input_metadata_new = self.pre_process_data(input_metadata)
         """extract metadata from a single input"""
-        prompt = self.generate_prompt(input_metadata)
+        prompt = self.generate_prompt(input_metadata_new)
         response = self.chain_llm_api(prompt)
         token_usage = response.usage_metadata
         json_output = self._parse_json_from_response(response.content)
@@ -110,31 +125,44 @@ class ProjectMetadataExtractor():
         """Using thread pool to batch extract metadata from a batch of inputs"""
 
         results = []
+        failed_tasks = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.extract_single, item) for item in input_metadata_list}
+            futures = {executor.submit(self.extract_single, item): index for index, item in enumerate(input_metadata_list)}
             # create tqdm progress bar
             progress_bar = tqdm(total=len(futures), desc="Inference Tasks", unit="task")
-            i = 0
             for future in as_completed(futures):
-                i += 1
+                task_id = futures[future]
                 try:
                     result = future.result()
-                    results.append(result)
+                    results.append((task_id,result))
                 except Exception as e:
-                    print(f"处理第{i}个数据项时发生错误：{e}")
+                    print(f"处理第{task_id}个数据项时发生错误：{e}")
+                    failed_tasks.append(task_id)
                 finally:
                     progress_bar.update(1)
             progress_bar.close()
+        # return success outputs, the indexes of failed tasks
+        return results,failed_tasks
 
-        return results
+    def post_process_data(self,extract_single_result):
+        result = extract_single_result[0]
+        input_metadata = extract_single_result[2]
+
+        for item in source_info:
+            if item["type"] == self.data_source:
+                result["dataset_source"] = item["dataset_source"]
+                break
+        result["raw_json"] = input_metadata
+
+        return result
 
 
 def special_prompt():
-    # todo: 待调整优化各数据来源的special_prompt
+    # todo: 可以继续调整优化各数据来源的special_prompt
     desc_normal = f""
-    desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project."
+    desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'dataset' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'dataset' field, other ids can be put into the 'other_ids' field."
     desc_hca = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 or more doi."
-    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study."
+    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs like SCP... can be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project."
     return {"normal":desc_normal, "cxg": desc_cxg, "hca": desc_hca, "scp": desc_scp}
 
 
@@ -148,6 +176,10 @@ def read_excel_file(file_path):
     df = pd.read_excel(file_path,header=0)
     data = df.to_dict(orient='records')
     return data
+
+def save_json_file(data, file_path):
+    with open(file_path, 'w', encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
 
 
 def convert_data_for_insert(data_dict):
@@ -164,35 +196,52 @@ def convert_data_for_insert(data_dict):
 
     return result
 
+def generate_json_name(data_source,current_number):
+     json_name = f"{data_source}_{current_number:06d}"
+     return json_name
+
 
 if __name__ == "__main__":
     API_URL = "https://api.moonshot.cn/v1/"
-    API_KEY = "your-key"
-    MODEL = "moonshot-v1-32k"
+    API_KEY = ""    ######### Commit记得删除！！！
+    MODEL = "moonshot-v1-128k"  ########## 可用8k、32k、128k
 
-    # 用cxg作为测试数据
-    data_source = 'cxg'
-    input_metadata_list = read_json_file(f"../../DBS/{data_source}.json")
-    json_schema = read_excel_file("../../DBS/json_schema.xlsx")
+    # 数据文件
+    data_source = 'scp'
+    for item in source_info:
+        if item["type"] == data_source:
+            file_name = item["file_name"]
+            break
+    input_metadata_list = read_json_file(f"../../DBS/{file_name}.json") # 原始json数据路径
+    print(len(input_metadata_list))
+    json_schema = read_excel_file("../../DBS/json_schema.xlsx") # json_schema路径
     extractor = ProjectMetadataExtractor(data_source, API_URL, API_KEY, MODEL, json_schema)
-    db_name = '../../DBS/projects.db'
-    controller = data_controller.SampleController(db_name)
 
-    # 测试单条抽取入库
-    result = extractor.extract_single(input_metadata_list[0])
-    print(f"output:\n{result[0]}")
-    print(f"token_usage:\n{result[1]}")
-    insert_data = convert_data_for_insert(result[0])
-    print(insert_data)
-    res = controller.insert_sample(insert_data)
-    print(res)
 
-    # # 测试批量抽取入库
-    # results = extractor.extract_batch(input_metadata_list[3:6]) # 测试第4、5、6条数据
-    # for result in results:
-    #     print(f"output:\n{result[0]}")
-    #     print(f"token_usage:\n{result[1]}")
-    #     insert_data = convert_data_for_insert(result[0])
-    #     res = controller.insert_sample(insert_data)
-    #     print(res)
+    # # 测试单条抽取保存为json
+    # number = 1    # 第几条数据
+    # start_time = time.time()
+    # result = extractor.extract_single(input_metadata_list[number-1])
+    # print(f"output:\n{result[0]}")
+    # print(f"token_usage:\n{result[1]}")
+    # result_data = extractor.post_process_data(result)
+    # print(result_data)
+    # result_json_path = f"../../../Bio Data/kimi_output_test/{generate_json_name(data_source,number)}.json"
+    # save_json_file(result_data,result_json_path)
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time  # 计算运行时间
+    # print(f"运行时间：{elapsed_time}秒")
 
+
+    # 批量抽取保存为json
+    results,failed_tasks = extractor.extract_batch(input_metadata_list,max_workers=20) # 批量抽取，可以调整max_workers
+    print(f"failed tasks of {data_source}: {failed_tasks}")
+    for result in results:
+        task_id = result[0]
+        content = result[1] # 每条抽取结果
+        # print(content)
+        result_data = extractor.post_process_data(content)  # 处理成保存json需要的内容
+        # print(result_data)
+        ######### 修改json保存路径
+        result_json_path = f"../../../Bio Data/kimi_output/{generate_json_name(data_source, task_id+1)}.json"
+        save_json_file(result_data, result_json_path)
