@@ -69,7 +69,7 @@ def main():
 
             # 使用 start_index 和 j 来确定原始列表中的位置
             original_task_id = start_index + j
-            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\hca\{generate_json_name(data_source, original_task_id + 1)}.json"
+            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\hca\{generate_json_name(data_source, task_id + 1)}.json"
             save_json_file(result_data, result_json_path)
             res = controller.insert_sample(result_data)
 
