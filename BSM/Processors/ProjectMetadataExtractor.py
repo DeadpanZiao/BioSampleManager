@@ -63,7 +63,8 @@ class ProjectMetadataExtractor():
             match = re.search(pattern, response, re.DOTALL)
             if match:
                 json_str = match.group(1).strip()
-                return json.loads(json_str)
+                fixed_json = json_str.replace(r'\xa0', ' ')
+                return json.loads(fixed_json)
             else:
                 return None
 

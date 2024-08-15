@@ -61,15 +61,15 @@ def main():
         results, failed_tasks = extractor.extract_batch(batch, max_workers=5)
         print(f"Failed tasks of {data_source} (batch {i + 1}): {failed_tasks}")
         for task in failed_tasks:
-            logging.error(f"Failed task {task} in batch {i + 1}: No {batch_size * (i+1) + task}")
+            logging.error(f"Failed task {task} in batch {i + 1}: No {batch_size * (i) + task+1}")
         for j, result in enumerate(results):
             task_id = result[0]
             content = result[1]
             result_data = extractor.post_process_data(content)  # 处理成保存json需要的内容
 
             # 使用 start_index 和 j 来确定原始列表中的位置
-            original_task_id = start_index + j
-            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\hca\{generate_json_name(data_source, task_id + 1)}.json"
+            original_task_id = start_index + task_id
+            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\hca\{generate_json_name(data_source, original_task_id + 1)}.json"
             save_json_file(result_data, result_json_path)
             res = controller.insert_sample(result_data)
 
