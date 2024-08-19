@@ -84,7 +84,7 @@ class SampleAccess:
             self.logger.error(f"Failed to insert record: {e}")
             return {"status": "error", "data": str(e)}
 
-    def check_if_exists(self, dataset, pmid, pmcid, doi):
+    def check_if_exists(self, dataset, pmid, pmcid, doi, other_ids):
         # Prepare the conditions for the SQL query
         conditions = []
         params = []
@@ -121,11 +121,23 @@ class SampleAccess:
         elif doi is not None:
             conditions.append("doi = ?")
             params.append(doi)
-        if not conditions:
-            conditions.append("1=1")
+
+        # Add conditions for other_ids
+        if isinstance(other_ids, list):
+            other_ids_str = json.dumps(other_ids)
+            conditions.append("other_ids LIKE ? OR other_ids LIKE ?")
+            params.extend([f'%{other_ids_str}%', f'%{json.dumps(json.loads(other_ids_str) + ["%"])}%'])
+        elif other_ids is not None:
+            conditions.append("other_ids = ?")
+            params.append(other_ids)
+
+        # Check if all parameters are None or empty
+        if not (dataset or pmid or pmcid or doi or other_ids):
+            return False
+
         # Construct the SQL query
         check_query = """
-        SELECT COUNT(*), dataset, pmid, pmcid, doi FROM {table_name}
+        SELECT COUNT(*), dataset, pmid, pmcid, doi, other_ids FROM {table_name}
         WHERE {conditions}
         """.format(table_name=self.table_name, conditions=" AND ".join(conditions))
 
@@ -135,9 +147,10 @@ class SampleAccess:
 
         if result and result[0] > 0:
             # Record exists
-            existing_dataset, existing_pmid, existing_pmcid, existing_doi = result[1:]
+            existing_dataset, existing_pmid, existing_pmcid, existing_doi, existing_other_ids = result[1:]
             self.logger.info(f"Record already exists with the following values: "
-                             f"dataset={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, doi={existing_doi}")
+                             f"dataset={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, "
+                             f"doi={existing_doi}, other_ids={existing_other_ids}")
             return True
         else:
             return False

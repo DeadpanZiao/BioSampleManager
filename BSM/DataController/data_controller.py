@@ -19,7 +19,8 @@ class SampleController:
             sample.get('dataset'),
             sample.get('pmid'),
             sample.get('pmcid'),
-            sample.get('doi')
+            sample.get('doi'),
+            sample.get('other_ids')
         ):
             return {"status": "exists", "data": None}
 
