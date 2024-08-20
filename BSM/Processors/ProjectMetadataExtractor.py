@@ -31,14 +31,16 @@ class ProjectMetadataExtractor():
             openai_api_base=self.api_url,
             openai_api_key=self.api_key,
             model_name=self.model_name,
-            temperature=0.1,
+            temperature=0.0,
         )
         return llm.invoke(prompt)
 
     def generate_prompt(self, input_metadata):
         prompt = f"You are an expert at biomedical and genomic information, you are given a task to parse the sample METADATA from a public database of a study to a given format, based on your domain knowledge and hints given. \n"
         prompt += special_prompt()[self.data_source] + "\n"  # special prompt for different data source
-        prompt += f"Please align the input data to the provided json schema and return the alignment result strictly in json format. \n\n"
+        prompt += f"Please align the input data to the provided json schema and return the alignment result strictly in json format. Do not include comments in the returned JSON. \n\n"
+        prompt += "There are chances that the GEO ID, pmid, pmcid, doi, are not provided in the input, use null in this case. Be strict and careful with keys above\n" \
+                  "ALL possible ids shown in the context must be put into other_ids"
         # input metadata
         prompt += f"Input: \n\n{input_metadata}\n\n"
         # output json schema
@@ -48,7 +50,7 @@ class ProjectMetadataExtractor():
         prompt += (
             f"\nRemember to respond with a markdown code snippet of a json blob, and NOTHING else, NO EXPLANATION\n"
             f"Note that in cases where information is not available, please respond with `null`.\n"
-            f"Note that if a list of choices is given, select the closest description.")
+            f"Note that if a list of choices is given, select the closest description.\n ")
         return prompt
 
     def _parse_json_from_response(self,response):
@@ -166,7 +168,7 @@ class ProjectMetadataExtractor():
 def special_prompt():
     # todo: 可以继续调整优化各数据来源的special_prompt
     desc_normal = f""
-    desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'dataset' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'dataset' field, other ids can be put into the 'other_ids' field."
+    desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'dataset' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'dataset' field, other ids must be put into the 'other_ids' field."
     desc_hca = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 or more doi."
     desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs like SCP... can be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project."
     return {"normal":desc_normal, "cxg": desc_cxg, "hca": desc_hca, "scp": desc_scp}

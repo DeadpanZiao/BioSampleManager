@@ -37,16 +37,16 @@ def main():
     MODEL = "moonshot-v1-128k"
 
     # 数据文件
-    data_source = 'scp'
+    data_source = 'cxg'
     for item in source_info:
         if item["type"] == data_source:
             file_name = item["file_name"]
             break
-    input_metadata_list = read_json_file(r"D:\projects\BSM\jsons\scp.json")
+    input_metadata_list = read_json_file(r"D:\projects\BSM\jsons\cxg.json")
     json_schema = read_excel_file("../../DBS/json_schema.xlsx")
     extractor = ProjectMetadataExtractor(data_source, API_URL, API_KEY, MODEL, json_schema)
 
-    db_name = '../../DBS/projects-0816.db'
+    db_name = '../../DBS/projects.db'
     controller = SampleController(db_name)
     logging.basicConfig(filename='log.txt', level=logging.ERROR, format='%(asctime)s:%(levelname)s:%(message)s')
     # 批量抽取保存为json
@@ -69,7 +69,7 @@ def main():
 
             # 使用 start_index 和 j 来确定原始列表中的位置
             original_task_id = start_index + task_id
-            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\scp\{generate_json_name(data_source, original_task_id + 1)}.json"
+            result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\kimi_output\{generate_json_name(data_source, original_task_id + 1)}.json"
             save_json_file(result_data, result_json_path)
             res = controller.insert_sample(result_data)
             if res.get('status') == 'exists':
