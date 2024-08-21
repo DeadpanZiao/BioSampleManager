@@ -30,6 +30,4 @@ class SingleCellPortalFetcher(SingleCellDBFetcher):
         else:
             self.logger.error(f"Failed to retrieve studies. Status code: {response.status_code}")
 
-f = SingleCellPortalFetcher()
-f.fetch(r'scp.json')
 

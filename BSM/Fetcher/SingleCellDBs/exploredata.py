@@ -116,6 +116,3 @@ class ExploreDataFetcher(SingleCellDBFetcher):
                         pbar.update(data['pagination']['count'])
             project['files'] = aggregated_data
             self.project_meta_data_with_url.append(project)
-
-f = ExploreDataFetcher()
-f.fetch('hca.json')

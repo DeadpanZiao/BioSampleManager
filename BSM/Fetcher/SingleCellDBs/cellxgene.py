@@ -27,23 +27,19 @@ class CellxgeneFetcher(SingleCellDBFetcher):
 
     def fetch(self, db_name):
         collections = self.fetch_collections()
-        dataset = self.fetch_dataset()
+        datasets = self.fetch_dataset()
 
-        data1 = collections
-        data2 = dataset
+        merged_datasets = []
+        for collection in collections:
+            collection_datasets = collection.get('datasets', [])
+            for dataset in collection_datasets:
+                dataset_id = dataset.get('dataset_id')
+                matching_dataset = next((d for d in datasets if d.get('dataset_id') == dataset_id), None)
+                if matching_dataset:
+                    dataset.update(matching_dataset)
+            merged_datasets.append(collection)
 
-        merged_data = []
-        for obj in data1:
-            datasets = obj.get('datasets', [])
-            for dataset in datasets:
-                dataset_id1 = dataset.get('dataset_id')
-                for i in data2:
-                    dataset_id2 = i.get('dataset_id')
-                    if dataset_id1 == dataset_id2:
-                        dataset.update(i)
-                        merged_data.append(obj)
-
-        manager = JsonManager(db_name)
-        manager.save(merged_data)
+        json_manager = JsonManager(db_name)
+        json_manager.save(merged_datasets)
         self.logger.info("Data saved successfully to JSON file.")
 
