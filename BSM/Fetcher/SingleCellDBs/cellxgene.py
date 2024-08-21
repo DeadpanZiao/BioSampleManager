@@ -1,4 +1,3 @@
-import json
 import requests
 from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
 from BSM.Fetcher.utils import JsonManager
