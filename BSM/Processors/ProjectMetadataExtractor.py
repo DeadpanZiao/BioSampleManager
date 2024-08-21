@@ -40,7 +40,7 @@ class ProjectMetadataExtractor():
         prompt += special_prompt()[self.data_source] + "\n"  # special prompt for different data source
         prompt += f"Please align the input data to the provided json schema and return the alignment result strictly in json format. Do not include comments in the returned JSON. \n\n"
         prompt += "There are chances that the GEO ID, pmid, pmcid, doi, are not provided in the input, use null in this case. Be strict and careful with keys above\n" \
-                  "ALL possible ids shown in the context must be put into other_ids"
+                  "ALL possible ids shown in the context must be put into other_ids. Possible id value longer than 30 characters does not belong to GEO ids. Put them into other_ids instead"
         # input metadata
         prompt += f"Input: \n\n{input_metadata}\n\n"
         # output json schema
@@ -65,6 +65,7 @@ class ProjectMetadataExtractor():
             match = re.search(pattern, response, re.DOTALL)
             if match:
                 json_str = match.group(1).strip()
+                print(json_str)
                 fixed_json = json_str.replace(r'\xa0', ' ')
                 return json.loads(fixed_json)
             else:
