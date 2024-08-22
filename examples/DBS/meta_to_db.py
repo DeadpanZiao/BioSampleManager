@@ -42,7 +42,7 @@ def main():
         if item["type"] == data_source:
             file_name = item["file_name"]
             break
-    input_metadata_list = read_json_file(r"D:\projects\BSM\jsons\cxg.json")
+    input_metadata_list = read_json_file(rf"D:\projects\BSM\jsons\{data_source}.json")
     json_schema = read_excel_file("../../DBS/json_schema.xlsx")
     extractor = ProjectMetadataExtractor(data_source, API_URL, API_KEY, MODEL, json_schema)
 

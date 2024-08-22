@@ -9,11 +9,11 @@ class SampleAccess:
         self.cursor = self.conn.cursor()
         self.table_name = 'Sample'
         self._columns = [
-            "internal_id", "dataset", "pmid", "pmcid", "doi",  "other_ids", "title", "topic", "resolution",
+            "internal_id", "geo_id", "pmid", "pmcid", "doi",  "other_ids", "title", "topic", "resolution",
             "project_description", "disease", "species", "organ","technology_name",
             "library_strategy",  "nuclei_extraction", "dataset_source", "raw_json"
         ]
-        self.list_columns = ["dataset","pmid", "pmcid", "doi", "other_ids", "organ", "technology_name", "disease",
+        self.list_columns = ["geo_id","pmid", "pmcid", "doi", "other_ids", "organ", "technology_name", "disease",
                              "species", "topic", "technology_name", "library_strategy"]
         self.setup_logging()
         self.create_table()
@@ -84,19 +84,19 @@ class SampleAccess:
             self.logger.error(f"Failed to insert record: {e}")
             return {"status": "error", "data": str(e)}
 
-    def check_if_exists(self, dataset, pmid, pmcid, doi, other_ids):
+    def check_if_exists(self, geo_id, pmid, pmcid, doi, other_ids):
         # Prepare the conditions for the SQL query
         conditions = []
         params = []
 
         # Convert lists to JSON strings for comparison
-        if isinstance(dataset, list):
-            dataset_str = json.dumps(dataset)
-            conditions.append("dataset LIKE ? OR dataset LIKE ?")
+        if isinstance(geo_id, list):
+            dataset_str = json.dumps(geo_id)
+            conditions.append("geo_id LIKE ? OR geo_id LIKE ?")
             params.extend([f'%{dataset_str}%', f'%{json.dumps(json.loads(dataset_str) + ["%"])}%'])
-        elif dataset is not None:
-            conditions.append("dataset = ?")
-            params.append(dataset)
+        elif geo_id is not None:
+            conditions.append("geo_id = ?")
+            params.append(geo_id)
 
         if isinstance(pmid, list):
             pmid_str = json.dumps(pmid)
@@ -132,12 +132,12 @@ class SampleAccess:
             params.append(other_ids)
 
         # Check if all parameters are None or empty
-        if not (dataset or pmid or pmcid or doi or other_ids):
+        if not (geo_id or pmid or pmcid or doi or other_ids):
             return False
 
         # Construct the SQL query
         check_query = """
-        SELECT COUNT(*), dataset, pmid, pmcid, doi, other_ids FROM {table_name}
+        SELECT COUNT(*), geo_id, pmid, pmcid, doi, other_ids FROM {table_name}
         WHERE {conditions}
         """.format(table_name=self.table_name, conditions=" AND ".join(conditions))
 
@@ -149,7 +149,7 @@ class SampleAccess:
             # Record exists
             existing_dataset, existing_pmid, existing_pmcid, existing_doi, existing_other_ids = result[1:]
             self.logger.info(f"Record already exists with the following values: "
-                             f"dataset={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, "
+                             f"geo_id={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, "
                              f"doi={existing_doi}, other_ids={existing_other_ids}")
             return True
         else:

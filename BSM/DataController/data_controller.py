@@ -16,7 +16,7 @@ class SampleController:
 
         # Check if the record already exists based on the specified criteria
         if self.data_access.check_if_exists(
-            sample.get('dataset'),
+            sample.get('geo_id'),
             sample.get('pmid'),
             sample.get('pmcid'),
             sample.get('doi'),
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         os.mkdir('../../DBS')
     # insert sample
     data_to_insert = {
-        "dataset": ["GSE123"],
+        "geo_id": ["GSE123"],
         "pmid": "123456789",
         "doi": [
         "10.1016/j.xgen.2022.100108"
