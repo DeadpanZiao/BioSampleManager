@@ -1,3 +1,3 @@
-from .data_access import DataAccess
+from .data_access import SampleAccess
 
-__all__ = ['DataAccess']
+__all__ = ['SampleAccess']

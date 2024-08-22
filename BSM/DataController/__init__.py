@@ -1,3 +1,3 @@
-from .data_controller import DataController
+from .data_controller import SampleController
 
-__all__ = ['data_controller']
+__all__ = ['SampleController']
