@@ -37,7 +37,7 @@ def main():
     MODEL = "moonshot-v1-128k"
 
     # 数据文件
-    data_source = 'cxg'
+    data_source = 'scp'
     for item in source_info:
         if item["type"] == data_source:
             file_name = item["file_name"]
@@ -52,7 +52,7 @@ def main():
     # 批量抽取保存为json
     batch_size = 5
     num_batches = math.ceil(len(input_metadata_list) / batch_size)
-
+    failed_tasks_all_batches = []
     for i in tqdm(range(num_batches), desc="Batch Tasks", unit="batch"):
         start_index = i * batch_size
         end_index = min((i + 1) * batch_size, len(input_metadata_list))
@@ -61,7 +61,8 @@ def main():
         results, failed_tasks = extractor.extract_batch(batch, max_workers=5)
         print(f"Failed tasks of {data_source} (batch {i + 1}): {failed_tasks}")
         for task in failed_tasks:
-            logging.error(f"Failed task {task} in batch {i + 1}: No {batch_size * (i) + task+1}")
+            logging.error(f"Failed task {task} in batch {i + 1}: No {batch_size * i + task+1}")
+            failed_tasks_all_batches.append(batch_size * i + task+1)
         for j, result in enumerate(results):
             task_id = result[0]
             content = result[1]
@@ -72,8 +73,8 @@ def main():
             result_json_path = rf"D:\programs\BioSampleManager\Bio_Data\kimi_output\{generate_json_name(data_source, original_task_id + 1)}.json"
             save_json_file(result_data, result_json_path)
             res = controller.insert_sample(result_data)
-            if res.get('status') == 'exists':
-                print(result_data)
+            print(f'task {original_task_id} status: {res.get("status")}')
+    print("All failed tasks (original numbers):", failed_tasks_all_batches)
 
 
 if __name__ == "__main__":

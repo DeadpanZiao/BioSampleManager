@@ -85,75 +85,44 @@ class SampleAccess:
             return {"status": "error", "data": str(e)}
 
     def check_if_exists(self, geo_id, pmid, pmcid, doi, other_ids):
-        # Prepare the conditions for the SQL query
-        conditions = []
-        params = []
+        # Initialize the results dictionary
+        results = {
+            'geo_id': False,
+            'pmid': False,
+            'pmcid': False,
+            'doi': False,
+            'other_ids': False
+        }
 
-        # Convert lists to JSON strings for comparison
-        if isinstance(geo_id, list):
-            dataset_str = json.dumps(geo_id)
-            conditions.append("geo_id LIKE ? OR geo_id LIKE ?")
-            params.extend([f'%{dataset_str}%', f'%{json.dumps(json.loads(dataset_str) + ["%"])}%'])
-        elif geo_id is not None:
-            conditions.append("geo_id = ?")
-            params.append(geo_id)
+        # Check if the record exists for each parameter
+        if geo_id is not None:
+            results['geo_id'] = self._check_list_existence('geo_id', geo_id)
 
-        if isinstance(pmid, list):
-            pmid_str = json.dumps(pmid)
-            conditions.append("pmid LIKE ? OR pmid LIKE ?")
-            params.extend([f'%{pmid_str}%', f'%{json.dumps(json.loads(pmid_str) + ["%"])}%'])
-        elif pmid is not None:
-            conditions.append("pmid = ?")
-            params.append(pmid)
+        if pmid is not None:
+            results['pmid'] = self._check_list_existence('pmid', pmid)
 
-        if isinstance(pmcid, list):
-            pmcid_str = json.dumps(pmcid)
-            conditions.append("pmcid LIKE ? OR pmcid LIKE ?")
-            params.extend([f'%{pmcid_str}%', f'%{json.dumps(json.loads(pmcid_str) + ["%"])}%'])
-        elif pmcid is not None:
-            conditions.append("pmcid = ?")
-            params.append(pmcid)
+        if pmcid is not None:
+            results['pmcid'] = self._check_list_existence('pmcid', pmcid)
 
-        if isinstance(doi, list):
-            doi_str = json.dumps(doi)
-            conditions.append("doi LIKE ? OR doi LIKE ?")
-            params.extend([f'%{doi_str}%', f'%{json.dumps(json.loads(doi_str) + ["%"])}%'])
-        elif doi is not None:
-            conditions.append("doi = ?")
-            params.append(doi)
+        if doi is not None:
+            results['doi'] = self._check_list_existence('doi', doi)
 
-        # Add conditions for other_ids
-        if isinstance(other_ids, list):
-            other_ids_str = json.dumps(other_ids)
-            conditions.append("other_ids LIKE ? OR other_ids LIKE ?")
-            params.extend([f'%{other_ids_str}%', f'%{json.dumps(json.loads(other_ids_str) + ["%"])}%'])
-        elif other_ids is not None:
-            conditions.append("other_ids = ?")
-            params.append(other_ids)
+        if other_ids is not None:
+            results['other_ids'] = self._check_list_existence('other_ids', other_ids)
 
-        # Check if all parameters are None or empty
-        if not (geo_id or pmid or pmcid or doi or other_ids):
-            return False
+        return results
 
-        # Construct the SQL query
-        check_query = """
-        SELECT COUNT(*), geo_id, pmid, pmcid, doi, other_ids FROM {table_name}
-        WHERE {conditions}
-        """.format(table_name=self.table_name, conditions=" AND ".join(conditions))
+    def _check_list_existence(self, column, values):
+        # Serialize the list to a JSON string for comparison
+        serialized_values = json.dumps(values)
 
-        # Execute the query
-        self.cursor.execute(check_query, params)
-        result = self.cursor.fetchone()
+        # Query the database to find a match
+        query = f"SELECT COUNT(*) FROM {self.table_name} WHERE {column} = ?"
+        self.cursor.execute(query, (serialized_values,))
+        count = self.cursor.fetchone()[0]
 
-        if result and result[0] > 0:
-            # Record exists
-            existing_dataset, existing_pmid, existing_pmcid, existing_doi, existing_other_ids = result[1:]
-            self.logger.info(f"Record already exists with the following values: "
-                             f"geo_id={existing_dataset}, pmid={existing_pmid}, pmcid={existing_pmcid}, "
-                             f"doi={existing_doi}, other_ids={existing_other_ids}")
-            return True
-        else:
-            return False
+        # Return True if a match is found, False otherwise
+        return count > 0
 
     def close(self):
         self.conn.close()
