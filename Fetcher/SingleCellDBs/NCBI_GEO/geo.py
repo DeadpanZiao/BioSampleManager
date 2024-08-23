@@ -1,9 +1,11 @@
 from GEOparse import GEOparse
 import glob
 import time
+import pandas
 
 from Fetcher.SingleCellDBs import SingleCellDBFetcher
 from utils.DBS.json_file import JsonManager
+from pysradb.sraweb import SRAweb
 
 
 class Geo(SingleCellDBFetcher):
@@ -13,12 +15,34 @@ class Geo(SingleCellDBFetcher):
         self.soft_filepath = soft_filepath
 
     def get_gse_metadata(self, file):
-        # gse = GEOparse.get_GEO(geo="GSE178333", destdir="C:/GEO/") # 在线下载
+        # gse = GEOparse.get_GEO(geo="GSE178333", destdir="C:/GEO/")
         # GEOparse.GEOparse.parse_GSE("./GSE267215_family.soft.gz")
         gse = GEOparse.get_GEO(filepath=file)
         gse_metadata = gse.metadata
+        gse_id = gse_metadata['geo_accession'][0]
+        db = SRAweb()
+        try:
+            df = db.gse_to_srp(gse_id, detailed=True)
+            # print(df)
+            srp_id = df.iloc[0, 1]
+            dr = db.srp_to_srr(srp_id)
+            srr_ids = dr.iloc[:, 1]
+            srr_ids_value = srr_ids.values
+            fastq_links = []
+            current_fastq_links = [f"https://trace.ncbi.nlm.nih.gov/Traces/sra-reads-be/fastq?acc={srr_id}" for srr_id
+                                   in
+                                   srr_ids_value]
+            # current_fastq_links = self.generate_fastq_links(srr_ids)
+            fastq_links.extend(current_fastq_links)
+        except Exception as e:
+            # 处理其他所有异常
+            print(gse_id, f"An unexpected error occurred: {e}")
+            fastq_links = []
 
-        # 新建一个字典-sample
+        # a=srr_ids_value[0]
+        # srr_ids_list = srr_ids.tolist
+
+        # new meta-sample
         samples = {}
         # 从gse_metadata中提取sample_id
         sample_ids = gse_metadata.get('sample_id', [])
@@ -42,9 +66,8 @@ class Geo(SingleCellDBFetcher):
         # 将samples合并到series中
         gse_metadata['samples'] = samples
         # save_as_json(gse_metadata, 'GSE_meta.json')
-        '''
-        gsms（samples）的columns与table没有获取
-        '''
+
+        gse_metadata["fastq_links"] = fastq_links
         return gse_metadata
 
     def get_all_soft_file(self):
@@ -56,30 +79,22 @@ class Geo(SingleCellDBFetcher):
 
         return matching_files
 
-    def merge_geo_cojson(self):
+    def merge_geo_json(self, save_filepath):
         soft_file = self.get_all_soft_file()
-        all_gse = {}
         loop_time = []
         for file in soft_file:
             start_time = time.time()  # 记录开始时间
             current_gse = self.get_gse_metadata(file)
-            current_gse_id = current_gse['geo_accession'][0]
-            all_gse[current_gse_id] = current_gse
+            # current_gse_id = current_gse['geo_accession'][0]
+            # all_gse[current_gse_id] = current_gse
             end_time = time.time()  # 记录结束时间
             single_loop_time = end_time - start_time  # 计算本次循环耗时
             loop_time.append(single_loop_time)
-        return all_gse, loop_time
+        return current_gse, loop_time
 
-    def fetch(self, db_name, time_db):
-        data, fetch_time = self.merge_geo_cojson()
-        # data = data_and_time[0]
+    def fetch(self, db_name):
         manager = JsonManager(db_name)
-        manager.save(data)
+        manager.save(self.current_gse)
         self.logger.info("Data saved successfully to JSON file.")
-        # fetch_time = data_and_time[1]
-        manager_time = JsonManager(time_db)
-        manager_time.save(fetch_time)
-        # filename = './GEO_metadata_all.json'
-        # save_as_json(all_gse, filename)
-        # filename_time = './saveas_json_time.json'
-        # save_as_json(loop_time, filename_time)
+
+
