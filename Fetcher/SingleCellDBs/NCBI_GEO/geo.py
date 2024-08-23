@@ -1,11 +1,23 @@
 from GEOparse import GEOparse
 import glob
 import time
-import pandas
 
 from Fetcher.SingleCellDBs import SingleCellDBFetcher
 from utils.DBS.json_file import JsonManager
 from pysradb.sraweb import SRAweb
+
+'''
+思路：
+    1、方法
+    元数据获取通过库“GEOparse”
+    调用：给class Geo 传递“soft_filepath”（soft文件路径）参数，
+         然后调用merge_geo_json函数直接将目录中所有soft文件的元数据信息合并到一个json文件
+    2、保存json文件
+    提供一个list（包含元数据保存的文件名与保存所执行时间的文件名）
+    然后通过fetch保存json文件
+    3、运行/测试
+    运行tests/test-fetcher/test_geo.py
+'''
 
 
 class Geo(SingleCellDBFetcher):
@@ -79,7 +91,7 @@ class Geo(SingleCellDBFetcher):
 
         return matching_files
 
-    def merge_geo_json(self, save_filepath):
+    def merge_geo_json(self):
         soft_file = self.get_all_soft_file()
         loop_time = []
         for file in soft_file:
@@ -93,8 +105,11 @@ class Geo(SingleCellDBFetcher):
         return current_gse, loop_time
 
     def fetch(self, db_name):
-        manager = JsonManager(db_name)
-        manager.save(self.current_gse)
+        current_gse, loop_time = self.merge_geo_json()
+        manager1 = JsonManager(db_name[0])
+        manager1.save(current_gse)
         self.logger.info("Data saved successfully to JSON file.")
-
+        manager2 = JsonManager(db_name[1])
+        manager2.save(loop_time)
+        self.logger.info("The execution time saved successfully to JSON file.")
 
