@@ -1,5 +1,6 @@
 import logging
 import math
+from langchain_text_splitters import TokenTextSplitter
 
 from BSM.DataController import data_controller
 import re
@@ -151,16 +152,50 @@ class ProjectMetadataExtractor():
         else:
             return input_metadata
 
-    def extract_single(self, input_metadata: dict):
+    def extract_single(self, input_metadata: dict, chunk_size: int = 120000, chunk_overlap: int = 2000):
         """extract metadata from a single input"""
+        div_store = []
+        div_token_usage = []
         input_metadata_new = self.pre_process_data(input_metadata)
-        prompt = self.generate_prompt(input_metadata_new)
-        response = self.chain_llm_api(prompt)
-        token_usage = response.usage_metadata
-        json_output = self._parse_json_from_response(response.content)
-        output = self._check_single_output(input_metadata_new, json_output)
+        token_splitter = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        single_input_metadata_list = token_splitter.split_text(str(input_metadata_new))
+        for item in single_input_metadata_list:
+            prompt = self.generate_prompt(item)
+            response = self.chain_llm_api(prompt)
+            token_usage = response.usage_metadata
+            div_token_usage.append(token_usage)
+            json_output = self._parse_json_from_response(response.content)
+            div_store.append(json_output)
+        #值合并
+        if len(div_store) == 1:
+            result_data = div_store[0]
+            result_token = div_token_usage[0]
 
-        return output, token_usage, input_metadata
+        elif div_store == []:
+            result_data = []
+            result_token = []
+
+        else:
+            result_data = div_store[0]
+            result_token = div_token_usage[0]
+            for k in range(1, len(div_store)):
+                for key in div_store[k]:
+                    if div_store[k][key] is not None and div_store[k][key] != result_data[key]:
+                        if result_data[key] is None:
+                            result_data[key] = div_store[k][key]
+
+                    elif isinstance(result_data[key], list):
+                        if isinstance(div_store[k][key], list):
+                            result_data[key] = result_data[key] + div_store[k][key]
+
+                        else:
+                            result_data[key].append(div_store[k][key])
+
+                    elif isinstance(result_data[key], list):
+                        result_data[key] = result_data[key] + ',' + div_store[k][key]
+
+        output = self._check_single_output(input_metadata_new, result_data)
+        return output, result_token, input_metadata
 
     def extract_batch(self, input_metadata_list: list, max_workers=10):
         """Using thread pool to batch extract metadata from a batch of inputs"""
