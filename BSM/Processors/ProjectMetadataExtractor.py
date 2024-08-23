@@ -152,8 +152,23 @@ class ProjectMetadataExtractor():
         else:
             return input_metadata
 
-    def extract_single(self, input_metadata: dict, chunk_size: int = 120000, chunk_overlap: int = 2000):
+    def extract_single(self, input_metadata: dict):
         """extract metadata from a single input"""
+        input_metadata_new = self.pre_process_data(input_metadata)
+        prompt = self.generate_prompt(input_metadata_new)
+        response = self.chain_llm_api(prompt)
+        token_usage = response.usage_metadata
+        json_output = self._parse_json_from_response(response.content)
+        output = self._check_single_output(input_metadata_new, json_output)
+
+        return output, token_usage, input_metadata
+
+    def extract_single_long(self, input_metadata: dict, chunk_size, chunk_overlap):
+        """
+        step1:Split metadata into chunk_size strings and store them in a list
+        step2:Split metadata into chunk_size strings and store them in a list
+        step3:Merge the key-value pairs of the output results
+        """
         div_store = []
         div_token_usage = []
         input_metadata_new = self.pre_process_data(input_metadata)
@@ -166,7 +181,7 @@ class ProjectMetadataExtractor():
             div_token_usage.append(token_usage)
             json_output = self._parse_json_from_response(response.content)
             div_store.append(json_output)
-        #值合并
+
         if len(div_store) == 1:
             result_data = div_store[0]
             result_token = div_token_usage[0]
@@ -197,13 +212,13 @@ class ProjectMetadataExtractor():
         output = self._check_single_output(input_metadata_new, result_data)
         return output, result_token, input_metadata
 
-    def extract_batch(self, input_metadata_list: list, max_workers=10):
+    def extract_batch(self, input_metadata_list: list, max_workers=10, chunk_size: int = 120000, chunk_overlap: int = 2000):
         """Using thread pool to batch extract metadata from a batch of inputs"""
 
         results = []
         failed_tasks = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(self.extract_single, item): index for index, item in
+            futures = {executor.submit(self.extract_single_long, item, chunk_size, chunk_overlap): index for index, item in
                        enumerate(input_metadata_list)}
             # create tqdm progress bar
             progress_bar = tqdm(total=len(futures), desc="Inference Tasks", unit="task")
