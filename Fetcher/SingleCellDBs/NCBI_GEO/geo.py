@@ -10,17 +10,15 @@ from pysradb.sraweb import SRAweb
 思路：
     1、方法
     元数据获取通过库“GEOparse”
-    调用：给class Geo 传递“soft_filepath”（soft文件路径）参数，
-         然后调用merge_geo_json函数直接将目录中所有soft文件的元数据信息合并到一个json文件
-    2、保存json文件
-    提供一个list（包含元数据保存的文件名与保存所执行时间的文件名）
-    然后通过fetch保存json文件
-    3、运行/测试
+    调用：给class GeoFetcher 传递“soft_filepath”（soft文件路径）参数，
+         然后调用fetch函数，先读取当前目录中所有soft文件，然后依次获取soft的metadata，
+         首先判断当前目录是否已有该soft文件的json文件，若无，则的元数据信息存为单个json文件
+    2、运行/测试
     运行tests/test-fetcher/test_geo.py
 '''
 
 
-class Geo(SingleCellDBFetcher):
+class GeoFetcher(SingleCellDBFetcher):
     def __init__(self, soft_filepath):  # soft_filepath='D:/3.3-zjprogram/GEO/':
 
         super().__init__()
@@ -91,25 +89,32 @@ class Geo(SingleCellDBFetcher):
 
         return matching_files
 
-    def merge_geo_json(self):
+
+    def check_json_file(self, json_name):
+        matching_files = glob.glob(json_name)
+        if not matching_files:
+            print(f"{json_name} not found.")
+            return True
+        else:
+            print(f"{json_name} found.")
+            return False
+
+    def fetch(self, json_path):
         soft_file = self.get_all_soft_file()
         loop_time = []
         for file in soft_file:
-            start_time = time.time()  # 记录开始时间
-            current_gse = self.get_gse_metadata(file)
-            # current_gse_id = current_gse['geo_accession'][0]
-            # all_gse[current_gse_id] = current_gse
-            end_time = time.time()  # 记录结束时间
-            single_loop_time = end_time - start_time  # 计算本次循环耗时
-            loop_time.append(single_loop_time)
-        return current_gse, loop_time
-
-    def fetch(self, db_name):
-        current_gse, loop_time = self.merge_geo_json()
-        manager1 = JsonManager(db_name[0])
-        manager1.save(current_gse)
-        self.logger.info("Data saved successfully to JSON file.")
-        manager2 = JsonManager(db_name[1])
-        manager2.save(loop_time)
-        self.logger.info("The execution time saved successfully to JSON file.")
+            json_name = file.split('/')[-1].split('\\')[-1].split('_')[0] + '_metadata.json'
+            json_name = f'{json_path}{json_name}'
+            if self.check_json_file(json_name):
+                print(f"{json_name} is downloading.")
+                start_time = time.time()  # 记录开始时间
+                current_gse = self.get_gse_metadata(file)
+                manager = JsonManager(json_name)
+                manager.save(current_gse)
+                self.logger.info(f"{file} metadata saved successfully to JSON file.")
+                # current_gse_id = current_gse['geo_accession'][0]
+                # all_gse[current_gse_id] = current_gse
+                end_time = time.time()  # 记录结束时间
+                single_loop_time = end_time - start_time  # 计算本次循环耗时
+                loop_time.append(single_loop_time)
 
