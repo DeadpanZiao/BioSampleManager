@@ -37,7 +37,7 @@ class ProjectMetadataExtractor():
         prompt += special_prompt()[self.data_source] + "\n"  # special prompt for different data source
         prompt += f"Please align the input data to the provided json schema and return the alignment result strictly in json format. Do not include comments in the returned JSON. \n\n"
         prompt += "There are chances that the geo_id, pmid, pmcid, doi, are not provided in the input, use null in this case. Be strict and careful with keys above\n" \
-                  "The ID shown in the context that starts with 'GSE' is highly to be a geo_id. ALL other possible ids shown in the context must be put into other_ids. Possible id value longer than 30 characters does not belong to geo_id. Put them into other_ids instead"
+                  "The ID shown in the context that starts with 'GSE' is highly likely to be a geo_id. Other database specific possible ids shown in the context must be put into other_ids. Possible id value longer than 30 characters does not belong to geo_id. Put them into other_ids instead"
         # input metadata
         prompt += f"Input: \n\n{input_metadata}\n\n"
         # output json schema
@@ -281,5 +281,5 @@ def special_prompt():
     desc_normal = f""
     desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'geo_id' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'geo_id' field, the data of dataset_id should be put into 'other_ids' fields.."
     desc_hca = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 or more doi."
-    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs like SCP... can be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project."
+    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs starts with 'SCP' should be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project."
     return {"normal": desc_normal, "cxg": desc_cxg, "hca": desc_hca, "scp": desc_scp}

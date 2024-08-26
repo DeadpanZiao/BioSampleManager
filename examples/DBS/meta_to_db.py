@@ -37,7 +37,7 @@ def main():
     MODEL = "moonshot-v1-128k"
 
     # 数据文件
-    data_source = 'scp'
+    data_source = 'cxg'
     for item in source_info:
         if item["type"] == data_source:
             file_name = item["file_name"]
