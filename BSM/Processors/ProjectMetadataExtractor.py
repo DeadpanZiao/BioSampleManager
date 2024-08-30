@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI,OpenAI
 from langchain.text_splitter import RecursiveJsonSplitter
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 from BSM.DataController.data_controller import SampleController
 
@@ -27,30 +28,40 @@ class ProjectMetadataExtractor():
         self.model_name = model_name
         self.json_schema = json_schema
 
-    def chain_llm_api(self,prompt):
+    def chain_llm_api(self, input_metadata):
+        system_message_prompt = self.system_prompt()
+        human_message_prompt = self.human_prompt()
+        chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
         llm = ChatOpenAI(
             openai_api_base=self.api_url,
             openai_api_key=self.api_key,
             model_name=self.model_name,
             temperature=0.1,
         )
-        return llm.invoke(prompt)
+        output = llm.invoke(chat_prompt.format(input_metadata=input_metadata))
+        return output
 
-    def generate_prompt(self, input_metadata):
-        prompt = f"You are an expert at biomedical and genomic information, you are given a task to parse the sample METADATA from a public database of a study to a given format, based on your domain knowledge and hints given. \n"
-        prompt += special_prompt()[self.data_source] + "\n"  # special prompt for different data source
+    def system_prompt(self):
+        prompt = (
+                f"You are an expert at biomedical and genomic information, you are given a task to parse the sample METADATA from a public database of a study to a given format, based on your domain knowledge and hints given.\n"
+                f"Remember to respond with a markdown code snippet of a json blob, and NOTHING else, NO EXPLANATION\n"
+                f"Note that in cases where information is not available, please respond with `null`.\n"
+                f"Note that if a list of choices is given, select the closest description."
+            )
+
+        return SystemMessagePromptTemplate.from_template(prompt)
+
+    def human_prompt(self):
+        prompt = special_prompt()[self.data_source] + "\n"  # special prompt for different data source
         prompt += f"Please align the input data to the provided json schema and return the alignment result strictly in json format. \n\n"
         # input metadata
-        prompt += f"Input: \n\n{input_metadata}\n\n"
+        prompt += "Input: \n\n{input_metadata}\n\n"
         # output json schema
         prompt += f"Output json schema: \n\n"
         for item in self.json_schema:
             prompt += f"- **{item['Field']}**: {item['Type']}, {item['Description']}\n"
-        prompt += (
-            f"\nRemember to respond with a markdown code snippet of a json blob, and NOTHING else, NO EXPLANATION\n"
-            f"Note that in cases where information is not available, please respond with `null`.\n"
-            f"Note that if a list of choices is given, select the closest description.")
-        return prompt
+
+        return HumanMessagePromptTemplate.from_template(prompt)
 
     def _parse_json_from_response(self,response):
         """
@@ -150,8 +161,7 @@ class ProjectMetadataExtractor():
     def extract_single(self,input_metadata:dict):
         """extract metadata from a single input"""
         input_metadata_new = self.pre_process_data(input_metadata)
-        prompt = self.generate_prompt(input_metadata_new)
-        response = self.chain_llm_api(prompt)
+        response = self.chain_llm_api(input_metadata_new)
         token_usage = response.usage_metadata
         json_output = self._parse_json_from_response(response.content)
         output = self._check_single_output(input_metadata_new,json_output)
