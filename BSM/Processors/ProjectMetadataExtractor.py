@@ -1,4 +1,3 @@
-
 import re
 import json
 
@@ -6,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from langchain_openai import ChatOpenAI, OpenAI
 from langchain.text_splitter import RecursiveJsonSplitter
-
 
 source_info = [
     {"type": "cxg", "file_name": "cellxgene", "dataset_source": "CellxGene"},
@@ -24,12 +22,21 @@ class ProjectMetadataExtractor():
         self.json_schema = json_schema
 
     def chain_llm_api(self, prompt):
+        # llm = ChatOpenAI(
+        #     # openai_api_base=self.api_url,
+        #     base_url=self.api_url,
+        #     openai_api_key=self.api_key,
+        #     model_name=self.model_name,
+        #     temperature=0.0,
+        # )
         llm = ChatOpenAI(
-            openai_api_base=self.api_url,
-            openai_api_key=self.api_key,
-            model_name=self.model_name,
-            temperature=0.0,
-        )
+            base_url=self.api_url,
+            api_key=self.api_key,
+            model=self.model_name,
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2)
         return llm.invoke(prompt)
 
     def generate_prompt(self, input_metadata):
@@ -56,7 +63,7 @@ class ProjectMetadataExtractor():
         2.extract json str by regex from response
         """
         try:
-            print(json.loads(response))
+            # print(json.loads(response))
             return json.loads(response)
         except json.JSONDecodeError:
             pattern = r'```json(.+?)```'
@@ -183,6 +190,7 @@ class ProjectMetadataExtractor():
 
     def post_process_data(self, extract_single_result):
         result = extract_single_result[0]
+        token_usage = extract_single_result[1]
         input_metadata = extract_single_result[2]
 
         for item in source_info:
@@ -191,7 +199,7 @@ class ProjectMetadataExtractor():
                 break
         result["raw_json"] = input_metadata
 
-        return result
+        return result, token_usage
 
     def check_and_split_long_input(self, input_metadata: dict, length_limit=180000):
         """
@@ -277,7 +285,6 @@ class ProjectMetadataExtractor():
 
 
 def special_prompt():
-    # todo: 可以继续调整优化各数据来源的special_prompt
     desc_normal = f""
     desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'geo_id' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'geo_id' field, the data of dataset_id should be put into 'other_ids' fields.."
     desc_hca = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 or more doi."

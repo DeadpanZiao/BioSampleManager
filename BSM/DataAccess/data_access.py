@@ -11,10 +11,10 @@ class SampleAccess:
         self._columns = [
             "internal_id", "geo_id", "pmid", "pmcid", "doi",  "other_ids", "title", "topic", "resolution",
             "project_description", "disease", "species", "organ","technology_name",
-            "library_strategy",  "nuclei_extraction", "dataset_source", "raw_json"
+            "library_strategy",  "nuclei_extraction", "dataset_source", "download_links", "raw_json"
         ]
         self.list_columns = ["geo_id","pmid", "pmcid", "doi", "other_ids", "organ", "technology_name", "disease",
-                             "species", "topic", "technology_name", "library_strategy"]
+                             "species", "topic", "technology_name", "library_strategy", "download_links"]
         self.setup_logging()
         self.create_table()
 

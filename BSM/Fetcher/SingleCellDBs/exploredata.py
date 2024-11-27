@@ -10,13 +10,14 @@ from BSM.Fetcher.utils import JsonManager
 
 
 class ExploreDataFetcher(SingleCellDBFetcher):
-    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp40&order=asc&sort=projectTitle&filters=%7B%7D',
+    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp44&order=asc&sort=projectTitle&filters=%7B%7D',
                  files_url=r'https://service.azul.data.humancellatlas.org/index/files'):
         super().__init__()
         self.project_meta_data = []
         self.project_meta_data_with_url = []
         self.project_url = project_url
         self.files_url = files_url
+        self.dcp_num = "dcp44"
         self.headers = {'Accept': 'application/json, text/plain, */*'}
 
     def fetch(self, file_name):
@@ -38,24 +39,20 @@ class ExploreDataFetcher(SingleCellDBFetcher):
         else:
             projects = self.project_meta_data
         self.fetch_url(projects)
-        manager.save_by_lines(self.project_meta_data_with_url)
-        # with open(file_name, 'w', encoding='utf-8') as f:
-        #     for item in tqdm(self.project_meta_data_with_url, desc='Saving JSON'):
-        #         json.dump(item, f, ensure_ascii=False)
-        #         f.write('\n')
+        # manager.save_by_lines(self.project_meta_data_with_url)
+        manager.write_large_json(self.project_meta_data_with_url)
         self.logger.info("Data saved successfully to JSON file.")
 
     def fetch_project(self):
         url = self.project_url
 
         response = requests.get(url)
-        response.raise_for_status()  # 如果请求失败，抛出异常
+        response.raise_for_status()
         # 解析JSON数据
         data = response.json()
         total = data['pagination']['total']
         with tqdm(total=total, desc='Fetching Project Data', initial=data['pagination']['count']) as pbar:
             while url:
-                # 提取“hits”字段
                 hits = data.get('hits', [])
                 self.project_meta_data.extend(hits)
                 # 获取下一页的URL
@@ -63,7 +60,7 @@ class ExploreDataFetcher(SingleCellDBFetcher):
                 url = pagination.get('next', None)
                 if url:
                     response = requests.get(url)
-                    response.raise_for_status()  # 如果请求失败，抛出异常
+                    response.raise_for_status()
                     data = response.json()
                     pbar.update(data['pagination']['count'])
 
@@ -71,7 +68,7 @@ class ExploreDataFetcher(SingleCellDBFetcher):
         for project in tqdm(projects, desc='Processing Project'):
             entry_id = project.get('entryId')
             params = {
-                "catalog": "dcp40",
+                "catalog": self.dcp_num,
                 "filters": json.dumps({"projectId": {"is": [entry_id]}}),
                 "size": 1000
             }

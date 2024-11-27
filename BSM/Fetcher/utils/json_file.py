@@ -22,7 +22,7 @@ class JsonManager(object):
             for item in data:
                 if not first:
                     f.write(',\n')
-                json.dump(item, f, ensure_ascii=False)
+                json.dump(item, f, ensure_ascii=False, indent=4)
                 first = False
             f.write('\n]')
 
