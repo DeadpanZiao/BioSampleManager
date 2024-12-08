@@ -1,8 +1,14 @@
+import asyncio
 from BSM.Downloader.downloader import HCADownloader
 
-if __name__ == "__main__":
-    db_path = "../../DBS/projects-hca-qwen2-72b-instruct1128.db"
-    download_dir = r'D:/zjlab/data/'
+def start_downloading(database_path, table_name, save_root):
+    downloader = HCADownloader(database_path, table_name, save_root)
+    asyncio.run(downloader.main())
 
-    downloader = HCADownloader(db_path, download_dir)
-    downloader.download_files()
+
+if __name__ == '__main__':
+    database_path = r'../../DBS/projects-hca-qwen2-72b-instruct1128.db'
+    table_name = 'Sample'
+    save_root = r'D:/zjlab/data/'  # 保存路径
+
+    start_downloading(database_path, table_name, save_root)
