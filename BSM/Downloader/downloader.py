@@ -1,111 +1,137 @@
-import logging
 import os
-import json
+import aiohttp
+from tqdm.asyncio import tqdm
+import asyncio
 import sqlite3
-
+import json
+import aiofiles
 import requests
-from pathlib import Path
-from tqdm import tqdm
-from urllib.parse import urlparse
-from ftplib import FTP
-
-logging.basicConfig(level=logging.INFO)
-
 
 class BaseDownloader:
-    """基础下载器类，包含公共下载功能"""
+    def __init__(self, database_path, table_name, save_root):
+        self.database_path = database_path
+        self.table_name = table_name
+        self.save_root = save_root
 
-    def __init__(self, download_dir):
-        """初始化下载目录"""
-        self.download_dir = download_dir
+    def create_connection(self):
+        return sqlite3.connect(self.database_path)
 
-    def _save_path(self, url):
-        """根据URL获取保存文件的路径"""
-        local_filename = os.path.basename(urlparse(url).path)
-        save_path = os.path.join(self.download_dir, local_filename)
-        return save_path
+    async def check_file_exists(self, file_path):
+        return os.path.exists(file_path)
 
-    def _create_directory(self, path):
-        """创建目录（如果不存在）"""
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    def _download_with_progress(self, url, file_path):
-        """下载文件并显示进度条"""
+    def get_response_headers(self, url):
         try:
-            if url.startswith('https'):
-                with requests.get(url, stream=True) as r:
-                    r.raise_for_status()
-                    total_size_in_bytes = int(r.headers.get('content-length', 0))
-                    block_size = 1024  # 1KB
-
-                    with open(file_path, 'wb') as f:
-                        with tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True,
-                                  desc=os.path.basename(file_path)) as pbar:
-                            for data in r.iter_content(block_size):
-                                f.write(data)
-                                pbar.update(len(data))
-            elif url.startswith('ftp'):
-                def callback(block_num, block_size, total_size):
-                    progress_bytes = block_num * block_size
-                    tqdm.write(f"\r下载进度: {progress_bytes / total_size * 100:.2f}%", end='')
-
-                with FTP(urlparse(url).hostname) as ftp:
-                    ftp.login()  # 默认使用匿名登录，如有需要可添加用户名和密码
-                    file_parts = urlparse(url).path.split('/')
-                    remote_filename = file_parts[-1]
-                    total_size = ftp.size(remote_filename)
-
-                    with open(file_path, 'wb') as f:
-                        ftp.retrbinary(f'RETR {remote_filename}', f.write,
-                                       callback=lambda block_num, block_size: callback(block_num, block_size,
-                                                                                       total_size))
-
-                    tqdm.write('\n')  # 换行
-            else:
-                raise ValueError("不支持的协议: " + url)
+            headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers, allow_redirects=False)
+            return response.headers
         except Exception as e:
-            print(f"下载文件 {url} 时出错: {e}")
+            print(f"An error occurred: {e}")
+            return {}
 
-# HCADownloader类继承BaseDownloader
+    async def download_file(self, session, url, save_dir, semaphore, progress=None, overall_progress=None):
+        raise NotImplementedError("This method should be overridden by subclasses")
+
+
 class HCADownloader(BaseDownloader):
-    """特定于HCA项目的下载器类，继承自BaseDownloader"""
+    def __init__(self, database_path, table_name, save_root):
+        super().__init__(database_path, table_name, save_root)
 
-    def __init__(self, db_path, download_dir):
-        """初始化数据库路径和下载目录"""
-        super().__init__(download_dir)
-        self.db_path = db_path
+    async def download_file(self, session, url, save_dir, semaphore, progress=None, overall_progress=None):
+        async with semaphore:  # 控制并发量
+            try:
+                if url.startswith('ftp://'):
+                    pass  # FTP链接的处理需要额外的库或方法，这里暂时不做处理
+                else:
+                    # 获取重定向后的URL
+                    headers = self.get_response_headers(url)
+                    url = headers.get('Location', url)
 
-    def fetch_download_links(self):
-        """从数据库获取下载链接"""
-        conn = sqlite3.connect(self.db_path)
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        content_disposition = response.headers.get('Content-Disposition', '')
+                        file_name = content_disposition.split('filename=')[-1].strip('"') or url.split('/')[-1].split('?')[0]
+                        file_path = os.path.join(save_dir, file_name)
+
+                        if await self.check_file_exists(file_path):
+                            print(f"File {file_name} already exists, skipping.")
+                            if overall_progress:
+                                overall_progress.update(1)
+                            return
+
+                        total_size = int(response.headers.get('Content-Length', 0))
+                        wrote = 0
+
+                        async with aiofiles.open(file_path, 'wb') as f:
+                            with tqdm(total=total_size, unit='B', unit_scale=True, desc=file_name, leave=False) as pbar:
+                                async for chunk in response.content.iter_chunked(1024 * 1024):  # 每次写入1MB 避免写入缓存
+                                    await f.write(chunk)
+                                    wrote += len(chunk)
+                                    pbar.update(len(chunk))
+
+                        if total_size != 0 and wrote != total_size:
+                            print(f"ERROR, something went wrong downloading {file_name}")
+                    else:
+                        print(f"Failed to download {url}. Status code: {response.status}")
+                    if overall_progress:
+                        overall_progress.update(1)
+            except Exception as e:
+                print(f"Error downloading {url}: {e}")
+                if overall_progress:
+                    overall_progress.update(1)
+
+    async def main(self):
+        conn = self.create_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT internal_id, download_links FROM Sample")
-        rows = cursor.fetchall()
-        download_tasks = []
-
-        for row in rows:
-            download_links_str = row[1]
-            internal_id = str(row[0])
-            if download_links_str is not None:
-                download_links_list = json.loads(download_links_str)
-                for link in download_links_list:
-                    if "service." in link or "ftp." in link:
-                        link = link.strip()
-                        download_tasks.append((internal_id, link))
-
-        cursor.close()
+        cursor.execute(f"SELECT internal_id as id, download_links as link FROM {self.table_name} WHERE download_links IS NOT NULL limit 2")
+        links = cursor.fetchall()
         conn.close()
-        return download_tasks
 
-    def download_files(self):
-        """下载文件"""
-        tuples_list = self.fetch_download_links()
-        for id, link in tuples_list:
-            save_dir = os.path.join(self.download_dir, id)
-            self._create_directory(save_dir)
-            file_path = self._save_path(link)
-            if not os.path.exists(save_dir):
-                self._download_with_progress(link, file_path)
-            else:
-                print(f"文件 {file_path} 已存在，跳过下载。")
+        semaphore = asyncio.Semaphore(5)  # 控制并发数为5
+        tasks = []
+        total_files = 0
+
+        for item in links:
+            id, link_json = item
+            try:
+                link_data = json.loads(link_json)
+                if isinstance(link_data, dict):
+                    total_files += len(link_data)
+                elif isinstance(link_data, list):
+                    total_files += len(link_data)
+            except json.JSONDecodeError as e:
+                print(f"Error decoding JSON for ID {id}: {e}")
+
+        with tqdm(total=total_files, desc="Overall Progress") as overall_progress:
+            async with aiohttp.ClientSession() as session:
+                for item in links:
+                    id, link_json = item
+                    try:
+                        link_data = json.loads(link_json)
+
+                        if isinstance(link_data, dict):
+                            for key, link in link_data.items():
+                                if isinstance(link, str) and link.startswith(('https://service', 'ftp://')):
+                                    save_dir = os.path.join(self.save_root, str(id))
+                                    os.makedirs(save_dir, exist_ok=True)
+                                    real_link = self.get_response_headers(link).get('Location', link)
+
+                                    task = self.download_file(session, real_link, save_dir, semaphore, overall_progress=overall_progress)
+                                    tasks.append(task)
+                        elif isinstance(link_data, list):
+                            for link in link_data:
+                                if isinstance(link, str) and link.startswith(('https://service', 'ftp://', 'https://storage')):
+                                    save_dir = os.path.join(self.save_root, str(id))
+                                    os.makedirs(save_dir, exist_ok=True)
+
+                                    task = self.download_file(session, link, save_dir, semaphore, overall_progress=overall_progress)
+                                    tasks.append(task)
+                        else:
+                            print(f"Unsupported data type for ID {id}: Expected dict or list, got {type(link_data)}")
+
+                    except json.JSONDecodeError as e:
+                        print(f"Error decoding JSON for ID {id}: {e}")
+
+                await asyncio.gather(*tasks)
