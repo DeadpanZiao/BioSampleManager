@@ -13,25 +13,27 @@ logging.basicConfig(level=logging.INFO)
 
 
 class BaseDownloader:
-    """基础下载器类，包含公共下载功能"""
+    """Base class for downloader, containing common download functionalities"""
 
     def __init__(self, download_dir):
-        """初始化下载目录"""
+        """Initialize the download directory"""
         self.download_dir = download_dir
 
-    def _save_path(self, url):
-        """根据URL获取保存文件的路径"""
+    def _save_path(self, url, save_dir=None):
+        """Get the path to save the file based on URL"""
         local_filename = os.path.basename(urlparse(url).path)
-        save_path = os.path.join(self.download_dir, local_filename)
-        return save_path
+        if save_dir is not None:
+            return os.path.join(save_dir, local_filename)
+        else:
+            return os.path.join(self.download_dir, local_filename)
 
     def _create_directory(self, path):
-        """创建目录（如果不存在）"""
+        """Create directory if it does not exist"""
         if not os.path.exists(path):
             os.makedirs(path)
 
     def _download_with_progress(self, url, file_path):
-        """下载文件并显示进度条"""
+        """Download the file with a progress bar"""
         try:
             if url.startswith('https'):
                 with requests.get(url, stream=True) as r:
@@ -48,10 +50,10 @@ class BaseDownloader:
             elif url.startswith('ftp'):
                 def callback(block_num, block_size, total_size):
                     progress_bytes = block_num * block_size
-                    tqdm.write(f"\r下载进度: {progress_bytes / total_size * 100:.2f}%", end='')
+                    tqdm.write(f"\rDownload progress: {progress_bytes / total_size * 100:.2f}%", end='')
 
                 with FTP(urlparse(url).hostname) as ftp:
-                    ftp.login()  # 默认使用匿名登录，如有需要可添加用户名和密码
+                    ftp.login()  # Anonymous login by default, can add username and password if necessary
                     file_parts = urlparse(url).path.split('/')
                     remote_filename = file_parts[-1]
                     total_size = ftp.size(remote_filename)
@@ -61,23 +63,23 @@ class BaseDownloader:
                                        callback=lambda block_num, block_size: callback(block_num, block_size,
                                                                                        total_size))
 
-                    tqdm.write('\n')  # 换行
+                    tqdm.write('\n')  # New line
             else:
-                raise ValueError("不支持的协议: " + url)
+                raise ValueError("Unsupported protocol: " + url)
         except Exception as e:
-            print(f"下载文件 {url} 时出错: {e}")
+            logging.info(f"Error downloading file {url}: {e}")
 
-# HCADownloader类继承BaseDownloader
+
 class HCADownloader(BaseDownloader):
-    """特定于HCA项目的下载器类，继承自BaseDownloader"""
+    """Downloader class specific to the HCA project, inheriting from BaseDownloader"""
 
     def __init__(self, db_path, download_dir):
-        """初始化数据库路径和下载目录"""
+        """Initialize database path and download directory"""
         super().__init__(download_dir)
         self.db_path = db_path
 
     def fetch_download_links(self):
-        """从数据库获取下载链接"""
+        """Fetch download links from the database"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT internal_id, download_links FROM Sample")
@@ -99,13 +101,12 @@ class HCADownloader(BaseDownloader):
         return download_tasks
 
     def download_files(self):
-        """下载文件"""
         tuples_list = self.fetch_download_links()
         for id, link in tuples_list:
             save_dir = os.path.join(self.download_dir, id)
             self._create_directory(save_dir)
-            file_path = self._save_path(link)
-            if not os.path.exists(save_dir):
+            file_path = self._save_path(link, save_dir)  # 使用新的 save_dir 参数
+            if not os.path.exists(file_path):  # Check if the specific file path exists
                 self._download_with_progress(link, file_path)
             else:
-                print(f"文件 {file_path} 已存在，跳过下载。")
+                logging.info(f"File {file_path} already exists, skipping download.")
