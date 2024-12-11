@@ -11,3 +11,4 @@ GEOparse
 pysradb
 bs4
 ijson
+aiofiles
