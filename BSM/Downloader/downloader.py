@@ -8,6 +8,8 @@ import aiofiles
 import aiohttp
 import requests
 from pathlib import Path
+
+from aiohttp import ClientTimeout
 from tqdm import tqdm
 from urllib.parse import urlparse
 from ftplib import FTP
@@ -123,13 +125,15 @@ class HCADownloader(BaseDownloader):
 
     async def _async_download_file(self, session, url, save_dir, semaphore, overall_progress=None):
         async with semaphore:  # 控制并发量
-            try:
+            # try:
                 if url.startswith('ftp://'):
-                    pass  # FTP链接的处理需要额外的库或方法，这里暂时不做处理
-                else:
-                    # 获取重定向后的URL
-                    headers = await self._get_response_headers(session, url)
-                    url = headers.get('Location', url)
+                    if overall_progress:
+                        overall_progress.update(1)
+                    return # FTP链接的处理需要额外的库或方法，这里暂时不做处理
+                # else:
+                #     # 获取重定向后的URL
+                #     headers = await self._get_response_headers(session, url)
+                #     url = headers.get('Location', url)
 
                 async with session.get(url) as response:
                     if response.status == 200:
@@ -150,13 +154,13 @@ class HCADownloader(BaseDownloader):
                                 return
                             else:
                                 logging.warning(f"File {file_name} exists but size does not match, re-downloading.")
-                                os.remove(file_path)  # 移除不完整的文件
+                                os.remove(file_path)
 
                         wrote = 0
 
                         async with aiofiles.open(file_path, 'wb') as f:
                             with tqdm(total=total_size, unit='B', unit_scale=True, desc=file_name, leave=False) as pbar:
-                                async for chunk in response.content.iter_chunked(1024 * 1024):  # 每次写入1MB 避免写入缓存
+                                async for chunk in response.content.iter_chunked(1024 * 1024):
                                     await f.write(chunk)
                                     wrote += len(chunk)
                                     pbar.update(len(chunk))
@@ -164,15 +168,15 @@ class HCADownloader(BaseDownloader):
                         if total_size != 0 and wrote != total_size:
                             logging.error(f"ERROR, something went wrong downloading {file_name}")
                             if Path(file_path).exists():
-                                os.remove(file_path)  # 下载失败移除部分下载的文件
+                                os.remove(file_path)
                     else:
                         logging.error(f"Failed to download {url}. Status code: {response.status}")
                     if overall_progress:
                         overall_progress.update(1)
-            except Exception as e:
-                logging.error(f"Error downloading {url}: {e}")
-                if overall_progress:
-                    overall_progress.update(1)
+            # except Exception as e:
+            #     logging.error(f"Error downloading {url}: {e}")
+            #     if overall_progress:
+            #         overall_progress.update(1)
 
     async def async_download_files(self, workers=5):
         conn = sqlite3.connect(self.db_path)
@@ -196,7 +200,8 @@ class HCADownloader(BaseDownloader):
             except json.JSONDecodeError as e:
                 logging.error(f"Error decoding JSON for ID {id}: {e}")
         with tqdm(total=total_files, desc="Overall Progress") as overall_progress:
-            async with aiohttp.ClientSession() as session:
+            timeout = ClientTimeout(total=60 * 300)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 for item in links:
                     id, link_json = item
                     try:

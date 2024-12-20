@@ -48,14 +48,14 @@ class ExploreDataFetcher(SingleCellDBFetcher):
 
         response = requests.get(url)
         response.raise_for_status()
-        # 解析JSON数据
+
         data = response.json()
         total = data['pagination']['total']
         with tqdm(total=total, desc='Fetching Project Data', initial=data['pagination']['count']) as pbar:
             while url:
                 hits = data.get('hits', [])
                 self.project_meta_data.extend(hits)
-                # 获取下一页的URL
+
                 pagination = data.get('pagination', {})
                 url = pagination.get('next', None)
                 if url:
