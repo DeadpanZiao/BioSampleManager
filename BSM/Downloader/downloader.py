@@ -1,191 +1,132 @@
-import asyncio
-import logging
 import os
-import json
-import sqlite3
-
-import aiofiles
 import aiohttp
+from tqdm.asyncio import tqdm
+import asyncio
+import sqlite3
+import json
+import aiofiles
 import requests
-from pathlib import Path
-
-from aiohttp import ClientTimeout
-from tqdm import tqdm
-from urllib.parse import urlparse
-from ftplib import FTP
-
-logging.basicConfig(level=logging.INFO)
-
 
 class BaseDownloader:
-    """Base class for downloader, containing common download functionalities"""
+    def __init__(self, database_path, table_name, save_root):
+        self.database_path = database_path
+        self.table_name = table_name
+        self.save_root = save_root
 
-    def __init__(self, download_dir):
-        """Initialize the download directory"""
-        self.download_dir = download_dir
+    def create_connection(self):
+        return sqlite3.connect(self.database_path)
 
-    def _save_path(self, url, save_dir=None):
-        """Get the path to save the file based on URL"""
-        local_filename = os.path.basename(urlparse(url).path)
-        if save_dir is not None:
-            return os.path.join(save_dir, local_filename)
-        else:
-            return os.path.join(self.download_dir, local_filename)
+    async def check_file_exists(self, file_path):
+        return os.path.exists(file_path)
 
-    def _create_directory(self, path):
-        """Create directory if it does not exist"""
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    def _download_with_progress(self, url, file_path):
-        """Download the file with a progress bar"""
+    def get_response_headers(self, url):
         try:
-            if url.startswith('https'):
-                with requests.get(url, stream=True) as r:
-                    r.raise_for_status()
-                    total_size_in_bytes = int(r.headers.get('content-length', 0))
-                    block_size = 1024  # 1KB
-
-                    with open(file_path, 'wb') as f:
-                        with tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True,
-                                  desc=os.path.basename(file_path)) as pbar:
-                            for data in r.iter_content(block_size):
-                                f.write(data)
-                                pbar.update(len(data))
-            elif url.startswith('ftp'):
-                def callback(block_num, block_size, total_size):
-                    progress_bytes = block_num * block_size
-                    tqdm.write(f"\rDownload progress: {progress_bytes / total_size * 100:.2f}%", end='')
-
-                with FTP(urlparse(url).hostname) as ftp:
-                    ftp.login()  # Anonymous login by default, can add username and password if necessary
-                    file_parts = urlparse(url).path.split('/')
-                    remote_filename = file_parts[-1]
-                    total_size = ftp.size(remote_filename)
-
-                    with open(file_path, 'wb') as f:
-                        ftp.retrbinary(f'RETR {remote_filename}', f.write,
-                                       callback=lambda block_num, block_size: callback(block_num, block_size,
-                                                                                       total_size))
-
-                    tqdm.write('\n')  # New line
-            else:
-                raise ValueError("Unsupported protocol: " + url)
-        except Exception as e:
-            logging.info(f"Error downloading file {url}: {e}")
-
-
-class HCADownloader(BaseDownloader):
-    """Downloader class specific to the HCA project, inheriting from BaseDownloader"""
-
-    def __init__(self, db_path, download_dir):
-        """Initialize database path and download directory"""
-        super().__init__(download_dir)
-        self.db_path = db_path
-
-    def fetch_download_links(self):
-        """Fetch download links from the database"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT internal_id, download_links FROM Sample")
-        rows = cursor.fetchall()
-        download_tasks = []
-
-        for row in rows:
-            download_links_str = row[1]
-            internal_id = str(row[0])
-            if download_links_str is not None:
-                download_links_list = json.loads(download_links_str)
-                for link in download_links_list:
-                    if "service." in link or "ftp." in link:
-                        link = link.strip()
-                        download_tasks.append((internal_id, link))
-
-        cursor.close()
-        conn.close()
-        return download_tasks
-
-    def download_files(self):
-        tuples_list = self.fetch_download_links()
-        for id, link in tuples_list:
-            save_dir = os.path.join(self.download_dir, id)
-            self._create_directory(save_dir)
-            file_path = self._save_path(link, save_dir)
-            if not os.path.exists(file_path):
-                self._download_with_progress(link, file_path)
-            else:
-                logging.info(f"File {file_path} already exists, skipping download.")
-
-    async def _get_response_headers(self, session, url):
-        async with session.head(url, allow_redirects=True) as response:
+            headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers, allow_redirects=False)
             return response.headers
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return {}
 
-    async def _check_file_exists(self, file_path):
-        return Path(file_path).exists()
+    async def download_file(self, session, url, save_dir, semaphore, progress=None, overall_progress=None):
+        raise NotImplementedError("This method should be overridden by subclasses")
 
-    async def _async_download_file(self, session, url, save_dir, semaphore, overall_progress=None):
+
+class SpecialDownloader(BaseDownloader):
+    def __init__(self, database_path, table_name, save_root):
+        super().__init__(database_path, table_name, save_root)
+
+    async def download_file(self, session, url, save_dir, semaphore, progress=None, overall_progress=None):
         async with semaphore:  # 控制并发量
-            # try:
-                if url.startswith('ftp://'):
-                    if overall_progress:
-                        overall_progress.update(1)
-                    return # FTP链接的处理需要额外的库或方法，这里暂时不做处理
-                # else:
-                #     # 获取重定向后的URL
-                #     headers = await self._get_response_headers(session, url)
-                #     url = headers.get('Location', url)
+            try:
+                headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+            }
+                url=self.get_response_headers(url).get('Location', url)
+                file_path = os.path.join(save_dir, url.split('/')[-1].split('?')[0])
+                #print(url)
+                #print('路径：',file_path)
 
-                async with session.get(url) as response:
-                    if response.status == 200:
-                        content_disposition = response.headers.get('Content-Disposition', '')
-                        file_name = content_disposition.split('filename=')[-1].strip('"') or \
-                                    url.split('/')[-1].split('?')[0]
-                        file_path = os.path.join(save_dir, file_name)
+                if await self.check_file_exists(file_path):
+                    wrote = os.path.getsize(file_path)
+                    headers['Range'] = f'bytes={wrote}-'
+                    print(f"Resuming download of {file_path} from byte {wrote}")
+                else:
+                    wrote = 0
 
-                        total_size = int(response.headers.get('Content-Length', 0))
-
-                        # 检查本地文件是否存在且大小是否正确
-                        if Path(file_path).exists():
-                            local_file_size = Path(file_path).stat().st_size
-                            if local_file_size == total_size:
-                                logging.info(f"File {file_name} already exists and is correct size, skipping.")
-                                if overall_progress:
-                                    overall_progress.update(1)
-                                return
-                            else:
-                                logging.warning(f"File {file_name} exists but size does not match, re-downloading.")
-                                os.remove(file_path)
-
-                        wrote = 0
-
-                        async with aiofiles.open(file_path, 'wb') as f:
-                            with tqdm(total=total_size, unit='B', unit_scale=True, desc=file_name, leave=False) as pbar:
-                                async for chunk in response.content.iter_chunked(1024 * 1024):
-                                    await f.write(chunk)
-                                    wrote += len(chunk)
-                                    pbar.update(len(chunk))
-
-                        if total_size != 0 and wrote != total_size:
-                            logging.error(f"ERROR, something went wrong downloading {file_name}")
-                            if Path(file_path).exists():
-                                os.remove(file_path)
+                async with session.get(url, headers=headers) as response:
+                    #print(url)
+                    if  response.status == 416:
+                        print(f"The local file is large enough to not require downloading  {file_path}")
                     else:
-                        logging.error(f"Failed to download {url}. Status code: {response.status}")
-                    if overall_progress:
-                        overall_progress.update(1)
-            # except Exception as e:
-            #     logging.error(f"Error downloading {url}: {e}")
-            #     if overall_progress:
-            #         overall_progress.update(1)
+                        if response.status == 206:  # Partial Content
+                            # print(response.headers)
+                            content_range = response.headers.get('Content-Range', '')
+                            if content_range:
+                                total_size = int(content_range.partition('/')[-1].strip())
+                            else:
+                                print("Warning: No Content-Range header found.")
+                                total_size = None
+                        elif response.status == 200:  # OK - whole file
+                            content_length = response.headers.get('Content-Length')
+                            total_size = int(content_length) if content_length and content_length.isdigit() else None
 
-    async def async_download_files(self, workers=5):
-        conn = sqlite3.connect(self.db_path)
+                        else:
+                            print(f"Failed to download {url}. Status code: {response.status}")
+                            if overall_progress:
+                                overall_progress.update(1)
+                            return
+
+                        if total_size is None:
+                            print("Warning: Unable to determine total size. Downloading without progress tracking.")
+                            pbar = tqdm(unit='B', unit_scale=True, desc=file_path, leave=False)
+                        else:
+                            pbar = tqdm(total=total_size, unit='B', unit_scale=True, desc=file_path, initial=wrote,
+                                        leave=False)
+
+                        async with aiofiles.open(file_path, 'ab') as f:  # Open in append binary mode
+                            async for chunk in response.content.iter_chunked(1024 * 1024):  # 每次写入1MB 避免写入缓存
+                                await f.write(chunk)
+                                wrote += len(chunk)
+                                pbar.update(len(chunk))
+
+                        pbar.close()
+
+                        if total_size is not None and wrote != total_size:
+                            print(f"ERROR, something went wrong downloading {file_path}")
+                        else:
+                            print(f"Successfully downloaded {file_path}")
+
+                        if overall_progress:
+                            overall_progress.update(1)
+
+
+            except Exception as e:
+                print(f"Error downloading {url}: {e}")
+                if overall_progress:
+                    overall_progress.update(1)
+
+            except Exception as e:
+                print(f"Error downloading {url}: {e}")
+                if overall_progress:
+                    overall_progress.update(1)
+
+
+
+
+
+    async def main(self):
+        conn = self.create_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT internal_id, download_links FROM Sample WHERE download_links IS NOT NULL")
+        cursor.execute(f"SELECT internal_id as id, download_links as link FROM {self.table_name} WHERE download_links IS NOT NULL")
         links = cursor.fetchall()
         conn.close()
 
-        semaphore = asyncio.Semaphore(workers)
+        semaphore = asyncio.Semaphore(5)  # 控制并发数为5
         tasks = []
         total_files = 0
 
@@ -198,10 +139,10 @@ class HCADownloader(BaseDownloader):
                 elif isinstance(link_data, list):
                     total_files += len(link_data)
             except json.JSONDecodeError as e:
-                logging.error(f"Error decoding JSON for ID {id}: {e}")
+                print(f"Error decoding JSON for ID {id}: {e}")
+
         with tqdm(total=total_files, desc="Overall Progress") as overall_progress:
-            timeout = ClientTimeout(total=60 * 300)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with aiohttp.ClientSession() as session:
                 for item in links:
                     id, link_json = item
                     try:
@@ -210,25 +151,25 @@ class HCADownloader(BaseDownloader):
                         if isinstance(link_data, dict):
                             for key, link in link_data.items():
                                 if isinstance(link, str) and link.startswith(('https://service', 'ftp://')):
-                                    save_dir = os.path.join(self.download_dir, str(id))
+                                    save_dir = os.path.join(self.save_root, str(id))
                                     os.makedirs(save_dir, exist_ok=True)
-                                    task = self._async_download_file(session, link, save_dir, semaphore,
-                                                                     overall_progress=overall_progress)
+                                    #real_link = self.get_response_headers(link).get('Location', link)
+
+                                    task = self.download_file(session, link, save_dir, semaphore, overall_progress=overall_progress)
                                     tasks.append(task)
                         elif isinstance(link_data, list):
                             for link in link_data:
-                                if isinstance(link, str) and link.startswith(
-                                        ('https://service', 'ftp://', 'https://storage')):
-                                    save_dir = os.path.join(self.download_dir, str(id))
+                                if isinstance(link, str) and link.startswith(('https://service', 'ftp://', 'https://storage')):
+                                    save_dir = os.path.join(self.save_root, str(id))
                                     os.makedirs(save_dir, exist_ok=True)
-                                    task = self._async_download_file(session, link, save_dir, semaphore,
-                                                                     overall_progress=overall_progress)
+                                    #real_link = self.get_response_headers(link).get('Location', link)
+
+                                    task = self.download_file(session, link, save_dir, semaphore, overall_progress=overall_progress)
                                     tasks.append(task)
                         else:
-                            logging.error(
-                                f"Unsupported data type for ID {id}: Expected dict or list, got {type(link_data)}")
+                            print(f"Unsupported data type for ID {id}: Expected dict or list, got {type(link_data)}")
 
                     except json.JSONDecodeError as e:
-                        logging.error(f"Error decoding JSON for ID {id}: {e}")
+                        print(f"Error decoding JSON for ID {id}: {e}")
 
                 await asyncio.gather(*tasks)
