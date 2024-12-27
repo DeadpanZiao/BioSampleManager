@@ -1,9 +1,9 @@
 import asyncio
-from BSM.Downloader.downloader import SpecialDownloader
+from BSM.Downloader.downloader import HCADownloader
 
 
 def start_downloading(database_path, table_name, save_root):
-    downloader = SpecialDownloader(database_path, table_name, save_root)
+    downloader = HCADownloader(database_path, table_name, save_root)
     asyncio.run(downloader.main())
 
 

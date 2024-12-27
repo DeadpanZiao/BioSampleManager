@@ -35,7 +35,7 @@ class BaseDownloader:
         raise NotImplementedError("This method should be overridden by subclasses")
 
 
-class SpecialDownloader(BaseDownloader):
+class HCADownloader(BaseDownloader):
     def __init__(self, database_path, table_name, save_root):
         super().__init__(database_path, table_name, save_root)
 
