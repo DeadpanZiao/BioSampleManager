@@ -36,20 +36,22 @@ class BaseDownloader:
 
 
 class HCADownloader(BaseDownloader):
-    def __init__(self, database_path, table_name, save_root):
+    def __init__(self, database_path, table_name, save_root, num_workers=1, dcp=None):
         super().__init__(database_path, table_name, save_root)
+        self.num_workers = num_workers
+        self.dcp = dcp
 
     async def download_file(self, session, url, save_dir, semaphore, progress=None, overall_progress=None):
-        async with semaphore:  # 控制并发量
+        async with semaphore:
             try:
                 headers = {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
             }
+                if self.dcp is not None:
+                    url = url.replace('dcp44', self.dcp)
                 url=self.get_response_headers(url).get('Location', url)
                 file_path = os.path.join(save_dir, url.split('/')[-1].split('?')[0])
-                #print(url)
-                #print('路径：',file_path)
 
                 if await self.check_file_exists(file_path):
                     wrote = os.path.getsize(file_path)
@@ -59,12 +61,10 @@ class HCADownloader(BaseDownloader):
                     wrote = 0
 
                 async with session.get(url, headers=headers) as response:
-                    #print(url)
                     if  response.status == 416:
-                        print(f"The local file is large enough to not require downloading  {file_path}")
+                        print(f"The local file is large enough for:  {file_path}")
                     else:
                         if response.status == 206:  # Partial Content
-                            # print(response.headers)
                             content_range = response.headers.get('Content-Range', '')
                             if content_range:
                                 total_size = int(content_range.partition('/')[-1].strip())
@@ -115,10 +115,6 @@ class HCADownloader(BaseDownloader):
                 if overall_progress:
                     overall_progress.update(1)
 
-
-
-
-
     async def main(self):
         conn = self.create_connection()
         cursor = conn.cursor()
@@ -126,7 +122,7 @@ class HCADownloader(BaseDownloader):
         links = cursor.fetchall()
         conn.close()
 
-        semaphore = asyncio.Semaphore(5)  # 控制并发数为5
+        semaphore = asyncio.Semaphore(self.num_workers)
         tasks = []
         total_files = 0
 
@@ -153,7 +149,6 @@ class HCADownloader(BaseDownloader):
                                 if isinstance(link, str) and link.startswith(('https://service', 'ftp://')):
                                     save_dir = os.path.join(self.save_root, str(id))
                                     os.makedirs(save_dir, exist_ok=True)
-                                    #real_link = self.get_response_headers(link).get('Location', link)
 
                                     task = self.download_file(session, link, save_dir, semaphore, overall_progress=overall_progress)
                                     tasks.append(task)
@@ -162,7 +157,6 @@ class HCADownloader(BaseDownloader):
                                 if isinstance(link, str) and link.startswith(('https://service', 'ftp://', 'https://storage')):
                                     save_dir = os.path.join(self.save_root, str(id))
                                     os.makedirs(save_dir, exist_ok=True)
-                                    #real_link = self.get_response_headers(link).get('Location', link)
 
                                     task = self.download_file(session, link, save_dir, semaphore, overall_progress=overall_progress)
                                     tasks.append(task)
