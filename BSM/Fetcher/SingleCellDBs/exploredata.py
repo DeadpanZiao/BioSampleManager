@@ -10,14 +10,13 @@ from BSM.Fetcher.utils import JsonManager
 
 
 class ExploreDataFetcher(SingleCellDBFetcher):
-    def __init__(self, project_url=r'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog=dcp44&order=asc&sort=projectTitle&filters=%7B%7D',
-                 files_url=r'https://service.azul.data.humancellatlas.org/index/files'):
+    def __init__(self, project_url=None, files_url=None, dcp_num='dcp44'):
         super().__init__()
         self.project_meta_data = []
         self.project_meta_data_with_url = []
-        self.project_url = project_url
-        self.files_url = files_url
-        self.dcp_num = "dcp44"
+        self.dcp_num = dcp_num
+        self.project_url = rf'https://service.azul.data.humancellatlas.org/index/projects?size=100&catalog={self.dcp_num}&order=asc&sort=projectTitle&filters=%7B%7D' if project_url is None else project_url
+        self.files_url = r'https://service.azul.data.humancellatlas.org/index/files' if files_url is None else files_url
         self.headers = {'Accept': 'application/json, text/plain, */*'}
 
     def fetch(self, file_name):
@@ -86,9 +85,7 @@ class ExploreDataFetcher(SingleCellDBFetcher):
             with tqdm(total=total, desc='Fetching Project URLs', initial=data['pagination']['count']) as pbar:
                 while url:
 
-                    # 提取“hits”字段
                     hits = data.get('hits', [])
-                    # 处理每个hit的files字段
                     for hit in hits:
                         files = hit.get('files', [])
                         for file in files:
@@ -98,7 +95,6 @@ class ExploreDataFetcher(SingleCellDBFetcher):
                                 file.pop('format')
                                 aggregated_data[file_format].append(file)
 
-                    # 获取下一页的URL
                     pagination = data.get('pagination', {})
                     url = pagination.get('next', None)
                     if url:

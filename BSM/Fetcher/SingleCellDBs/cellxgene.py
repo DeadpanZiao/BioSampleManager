@@ -13,12 +13,14 @@ class CellxgeneFetcher(SingleCellDBFetcher):
         self.headers = {"Content-Type": "application/json"}
 
     def fetch_dataset(self):
+        self.logger.info('fetching all cellxgene datasets')
         res = requests.get(url=self.datasets_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
         return data
 
     def fetch_collections(self):
+        self.logger.info('fetching all cellxgene collections')
         res = requests.get(url=self.collections_url, headers=self.headers)
         res.raise_for_status()
         data = res.json()
@@ -27,7 +29,6 @@ class CellxgeneFetcher(SingleCellDBFetcher):
     def fetch(self, db_name):
         collections = self.fetch_collections()
         datasets = self.fetch_dataset()
-
         merged_datasets = []
         for collection in collections:
             collection_datasets = collection.get('datasets', [])
@@ -40,5 +41,5 @@ class CellxgeneFetcher(SingleCellDBFetcher):
 
         json_manager = JsonManager(db_name)
         json_manager.save(merged_datasets)
-        self.logger.info("Data saved successfully to JSON file.")
+        self.logger.info(f"Data saved successfully to {db_name} file.")
 

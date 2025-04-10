@@ -1,4 +1,6 @@
 import requests
+from tqdm import tqdm
+
 from BSM.Fetcher.SingleCellDBs.fetchers import SingleCellDBFetcher
 from BSM.Fetcher.utils import JsonManager
 
@@ -15,18 +17,20 @@ class SingleCellPortalFetcher(SingleCellDBFetcher):
         if response.status_code == 200:
             studies = response.json()
             final_data = []
-            for study in studies:
+            for study in tqdm(studies):
                 accessions = study.get('accession', 'N/A')
                 study_url = f"{self.datasets_url}/{accessions}"
                 response = requests.get(study_url, headers=self.headers, verify=False)
                 if response.status_code == 200:
                     study_data = response.json()
                     final_data.append(study_data)
-                    self.logger.info(f"Data saved successfully to {accessions}.json file.")
+                    # self.logger.info()
+                    tqdm.write(f"Data saved successfully to {accessions}.json file.")
                 else:
                     self.logger.error(f"Failed to retrieve study {accessions}. Status code: {response.status_code}")
             manager = JsonManager(db_name)
             manager.save(final_data)
+            self.logger.info(f"Data saved successfully to {db_name} file.")
         else:
             self.logger.error(f"Failed to retrieve studies. Status code: {response.status_code}")
 

@@ -288,5 +288,5 @@ def special_prompt():
     desc_normal = f""
     desc_cxg = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 specified doi, with 1 or more datasets in the project. The 'geo_id' information can be found from the 'link_name' of the 'links' in the 'datasets', note that only the id of the geo is needed for 'geo_id' field, the data of dataset_id should be put into 'other_ids' fields.."
     desc_hca = f"Let's start with the basic information about the input data, which contains metadata about 1 project, corresponding to 1 or more doi."
-    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs starts with 'SCP' should be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project."
+    desc_scp = f"Let's start with the basic information about the input data, which contains metadata about 1 study. IDs starts with 'SCP' should be put into 'other_ids' fields. If the 'name' field contains content, it should be treated as the title of the project. The download_links appear in value of the key 'download_url' and 'media_url'"
     return {"normal": desc_normal, "cxg": desc_cxg, "hca": desc_hca, "scp": desc_scp}
