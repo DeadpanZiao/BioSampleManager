@@ -12,3 +12,5 @@ pysradb
 bs4
 ijson
 aiofiles
+vanna
+vanna[chromadb,openai,postgres]
