@@ -14,3 +14,5 @@ ijson
 aiofiles
 vanna
 vanna[chromadb,openai,postgres]
+fastmcp==2.10.4
+openai-agnet==0.0.16

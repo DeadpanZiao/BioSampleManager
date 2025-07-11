@@ -83,55 +83,59 @@ python cli.py retrieve \
 	--table "Sample"
 ```
 
+### MCP Intergration
+
+**MCP server**
+
+To start a local mcp server, run: 
+
+```
+python -m mcp_server.py
+```
+
+```
+[07/11/25 16:42:56] INFO     Starting MCP server                 server.py:1429
+                             'BioSampleManager Server 🧬' with                 
+                             transport 'http' on                               
+                             http://127.0.0.1:8000/mcp 
+```
+
+**MCP client**
+
+Here we use openai-agents as an example. See examples/mcp_demo/ for detail.
+
+```
+# linux or mac-os
+export OPENAI_API_KEY='your api key'
+# windows
+$env:OPENAI_API_KEY='your api key'
+
+python -m examples/mcp_demo/openai_agents.py
+```
+
+We get the following output:
+```
+I have several tools within the MCP functionalities. Here they are:
+
+1. **init_controller**: Initialize the sample controller with a given database path.
+
+2. **init_extractor**: Initialize the metadata extractor using specified details like API key and URL.
+
+3. **init_vanna**: Initialize the Vanna wrapper with configurations like API key and model.
+
+4. **download_data**: Download data from a specified source and save it in a designated directory.
+
+5. **fetch_data**: Fetch data from a specified database and save it to an output path.
+
+6. **process_metadata_batch**: Process metadata in batches with provided input paths and output directories.
+
+7. **query_with_vanna**: Query the database using Vanna AI with a specific question and table. 
+
+Do you need details or help using any of these tools?
+```
+
 
 
 ## Evaluation
 
-#### task 1 Data entry accuracy 数据入库准确率
-
-对给定的json格式存储的meta数据进行清洗存入数据库，再读取，恢复为原 json，对指定的 json key进行比较，如一致则为成功
-
-| 指标及说明  | 正确率 - accuracy (入库正确的样本/成功入库样本数) | 失败率 - failure rate (入库失败，如json格式解析错误，不合法字符串引起的入库失败样本/总样本数) |
-| ----------- | ------------------------------------------------- | ------------------------------------------------------------ |
-| kimi        |                                                   |                                                              |
-| qwen        |                                                   |                                                              |
-| gpt4-o      |                                                   |                                                              |
-| deepseek v3 |                                                   |                                                              |
-
-数据源：不需要额外标注数据源，可直接用fetcher获得的数据测试
-
-| 数据源                                                       | 样本数 |
-| ------------------------------------------------------------ | ------ |
-| [Cellxgene](https://cellxgene.cziscience.com/datasets)       | 100    |
-| [Human Cell Atlas (data explorer)](https://explore.data.humancellatlas.org/projects) | 100    |
-| [Broad Institue - single cell portal](https://singlecell.broadinstitute.org/single_cell) | 100    |
-
-#### task 2 Data Cleaning Quality Assessment
-
-对齐后的样本与人工标注样本比较
-
-| 指标及说明  | Field-level accuracy (入库正确的itm/总item) | **Overall Sample Accuracy** (正确入库的行/总行数) | missing rate (模型未填写的item/总item) |
-| ----------- | ------------------------------------------- | ------------------------------------------------- | -------------------------------------- |
-| kimi        |                                             |                                                   |                                        |
-| qwen        |                                             |                                                   |                                        |
-| gpt4-o      |                                             |                                                   |                                        |
-| deepseek v3 |                                             |                                                   |                                        |
-
-已收集人类标注样本共63个
-
-| 数据源                                                       | 样本数 |
-| ------------------------------------------------------------ | ------ |
-| [Cellxgene](https://cellxgene.cziscience.com/datasets)       | 21     |
-| [Human Cell Atlas (data explorer)](https://explore.data.humancellatlas.org/projects) | 21     |
-| [Broad Institue - single cell portal](https://singlecell.broadinstitute.org/single_cell) | 21     |
-
-#### task 3 Vanna text to sql 准确率
-
-设计100个检索任务（query, 如 What's the title corresponding to GSE204684?，可以把列名跟描述给模型，让模型提出query），判断返回值是否符合预期
-
-|             | sql 生成率 (生成sql数/query数) | sql可执行率（可成功执行sql/query数） | 成功率（执行sql返回结果符合预期/总query) |
-| ----------- | ------------------------------ | ------------------------------------ | ---------------------------------------- |
-| kimi        |                                |                                      |                                          |
-| qwen        |                                |                                      |                                          |
-| gpt4-o      |                                |                                      |                                          |
-| deepseek v3 |                                |                                      |                                          |
+pass
